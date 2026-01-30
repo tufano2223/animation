@@ -1,0 +1,461 @@
+%%manim -qm -v WARNING VolumeSferaUnified
+
+from manim import *
+import numpy as np
+
+class VolumeSferaUnified(ThreeDScene):
+    def construct(self):
+        # --- CONFIGURAZIONE GLOBALE ---
+        self.camera.background_color = "#1e1e1e"
+        
+        # Variabili colori
+        C_SFERA = WHITE
+        C_FILL = BLUE_B    
+        C_SURFACE = BLUE_A 
+        C_TEXT = WHITE
+        C_RAGGIO = WHITE   
+        C_HIGHLIGHT = YELLOW
+        
+        # NUOVI COLORI RICHIESTI
+        C_TITOLO_MAIN = "#06D6A0"
+        C_ACCENT_PURPLE = "#7D83FF"
+        C_ACCENT_YELLOW = "#FFD972"
+
+        R_INI = 2.0
+        sphere_center = DOWN * 0.5
+        
+        # Camera iniziale (2D)
+        self.set_camera_orientation(phi=0, theta=-90 * DEGREES)
+
+        # ==========================================
+        # SCENA 1: INTRODUZIONE
+        # ==========================================
+        
+        # [MODIFICA 1] Titolo colore #06D6A0 e Grassetto
+        testo_titolo = Text(
+            "Il volume della sfera", 
+            font_size=60, 
+            color=C_TITOLO_MAIN, 
+            weight="BOLD"
+        )
+        self.play(FadeIn(testo_titolo), run_time=1.0)
+        self.wait(2.0)
+        self.play(FadeOut(testo_titolo), run_time=1.0)
+        self.wait(0.5)
+
+        # ==========================================
+        # SCENA 2: SFERA E ROTAZIONE
+        # ==========================================
+
+        # Elementi Iniziali
+        sfera_outline = Circle(radius=R_INI, color=C_SFERA, stroke_width=4)
+        sfera_outline.move_to(sphere_center)
+        sfera_outline.set_fill(WHITE, opacity=0.05)
+        sfera_outline.set_z_index(2)
+
+        glare = Arc(radius=R_INI * 0.8, start_angle=PI/6, angle=PI/2, arc_center=sphere_center + DOWN*0.2 + LEFT*0.2)
+        glare.set_stroke(WHITE, width=8, opacity=0.3)
+        glare.set_z_index(4)
+
+        sfera_wireframe = Sphere(radius=R_INI - 0.05, resolution=(24, 24))
+        sfera_wireframe.move_to(sphere_center)
+        sfera_wireframe.set_style(fill_opacity=0, stroke_color=BLUE_A, stroke_width=1, stroke_opacity=0.3)
+        
+        testo_sfera = Text("Sfera", font_size=48, color=C_TEXT)
+        self.add_fixed_in_frame_mobjects(testo_sfera) 
+        testo_sfera.to_edge(UP, buff=1.0)
+
+        # Animazione Scena 2
+        self.play(FadeIn(sfera_outline), FadeIn(glare), FadeIn(sfera_wireframe), run_time=1)
+        self.play(Rotate(sfera_wireframe, angle=PI/2, axis=UP), Write(testo_sfera), run_time=1.5)
+        self.play(Rotate(sfera_wireframe, angle=PI/2, axis=UP), run_time=1.0)
+        self.play(Rotate(sfera_wireframe, angle=PI/2, axis=UP), FadeOut(testo_sfera), run_time=1.5)
+        self.play(FadeOut(sfera_wireframe), run_time=1.0)
+        self.wait(0.5)
+
+        # ==========================================
+        # SCENA 3: IL VOLUME (RIEMPIMENTO)
+        # ==========================================
+        
+        # [MODIFICA 2] (0:12) "volume" e "spazio" in #7D83FF
+        testo_volume = Text(
+            "Il volume misura lo spazio occupato", 
+            font_size=36, 
+            color=C_TEXT,
+            t2c={"volume": C_ACCENT_PURPLE, "spazio": C_ACCENT_PURPLE}
+        )
+        testo_volume.to_edge(UP, buff=1.0)
+
+        livello_liquido = ValueTracker(-R_INI)
+
+        def get_liquid_filling():
+            current_y = livello_liquido.get_value()
+            altezza_rettangolo = current_y + R_INI
+            if altezza_rettangolo < 0.01: altezza_rettangolo = 0.01
+            
+            rect_fill = Rectangle(width=R_INI*2.2, height=altezza_rettangolo)
+            rect_fill.align_to(sfera_outline, DOWN)
+            body = Intersection(sfera_outline, rect_fill, color=C_FILL, fill_opacity=0.5, stroke_width=0)
+            
+            safe_y = np.clip(current_y, -R_INI + 0.01, R_INI - 0.01)
+            width_at_y = 2 * np.sqrt(R_INI**2 - safe_y**2)
+            surface = Ellipse(width=width_at_y, height=0.4, color=C_SURFACE, fill_opacity=0.8, stroke_width=0)
+            surface.move_to(sphere_center + UP * safe_y)
+            return VGroup(body, surface)
+
+        riempimento_vol = always_redraw(get_liquid_filling).set_z_index(1) 
+
+        # Animazione Scena 3
+        self.play(Write(testo_volume), run_time=1)
+        self.add(riempimento_vol)
+        self.play(livello_liquido.animate.set_value(0.6), run_time=6, rate_func=linear)
+        self.wait(1)
+        self.play(FadeOut(testo_volume), run_time=1)
+        self.wait(0.5)
+
+        # ==========================================
+        # SCENA 4: IL RAGGIO
+        # ==========================================
+        
+        testo_raggio = Text("r è il raggio della sfera", font_size=36, color=C_TEXT)
+        testo_raggio.to_edge(UP, buff=1.0)
+        
+        segmento_r = Line(start=sphere_center, end=sphere_center + RIGHT * R_INI, color=C_RAGGIO, stroke_width=6)
+        segmento_r.set_z_index(3)
+        centro_dot = Dot(point=sphere_center, color=C_RAGGIO).set_z_index(3)
+        label_r = MathTex("r", color=C_RAGGIO, font_size=50)
+        label_r.next_to(segmento_r, UP, buff=0.1).set_z_index(3)
+
+        # Animazione Scena 4
+        self.wait(0.5)
+        self.play(
+            Write(testo_raggio),
+            FadeIn(centro_dot, scale=0.5),
+            Create(segmento_r),
+            Write(label_r),
+            run_time=1.5
+        )
+        self.play(
+            segmento_r.animate.set_color(YELLOW),
+            label_r.animate.set_color(YELLOW),
+            run_time=0.5
+        )
+        self.play(
+            segmento_r.animate.set_color(C_RAGGIO),
+            label_r.animate.set_color(C_RAGGIO),
+            run_time=0.5
+        )
+        self.wait(3)
+        self.play(FadeOut(testo_raggio), run_time=1.0)
+        self.wait(0.5)
+
+        # ==========================================
+        # SCENA 5: DIPENDENZA DAL RAGGIO (SCALING)
+        # ==========================================
+        
+        # Setup Variabili Dinamiche
+        r_tracker = ValueTracker(2.0)
+        RAPPORTO_LIVELLO = 0.6 / 2.0
+
+        # Definizioni Dynamic
+        def get_sfera_esterna_dyn():
+            r = r_tracker.get_value()
+            outline = Circle(radius=r, color=C_SFERA, stroke_width=4).move_to(sphere_center)
+            outline.set_fill(WHITE, opacity=0.05)
+            glare_dyn = Arc(radius=r * 0.8, start_angle=PI/6, angle=PI/2, arc_center=sphere_center + DOWN*(r*0.1) + LEFT*(r*0.1))
+            glare_dyn.set_stroke(WHITE, width=8, opacity=0.3)
+            return VGroup(outline, glare_dyn)
+
+        def get_liquido_dyn():
+            r = r_tracker.get_value()
+            livello_corrente = r * RAPPORTO_LIVELLO
+            altezza_rect = livello_corrente + r
+            rect_ref = Rectangle(width=r*2.2, height=altezza_rect).align_to(sphere_center + DOWN*r, DOWN)
+            circle_ref = Circle(radius=r).move_to(sphere_center)
+            body = Intersection(circle_ref, rect_ref, color=C_FILL, fill_opacity=0.5, stroke_width=0)
+            width_at_y = 2 * np.sqrt(r**2 - livello_corrente**2)
+            surface = Ellipse(width=width_at_y, height=0.4 * (r/2.0), color=C_SURFACE, fill_opacity=0.8, stroke_width=0)
+            surface.move_to(sphere_center + UP * livello_corrente)
+            return VGroup(body, surface)
+
+        def get_raggio_dyn():
+            r = r_tracker.get_value()
+            dot = Dot(point=sphere_center, color=C_RAGGIO)
+            line = Line(start=sphere_center, end=sphere_center + RIGHT * r, color=C_RAGGIO, stroke_width=6)
+            label = MathTex("r", color=C_RAGGIO, font_size=50).next_to(line, UP, buff=0.1)
+            return VGroup(dot, line, label)
+
+        sfera_group_dyn = always_redraw(get_sfera_esterna_dyn).set_z_index(2)
+        riempimento_vol_dyn = always_redraw(get_liquido_dyn).set_z_index(1)
+        raggio_group_dyn = always_redraw(get_raggio_dyn).set_z_index(3)
+
+        # Scambio oggetti statici -> dinamici
+        self.remove(sfera_outline, glare, riempimento_vol, segmento_r, centro_dot, label_r)
+        self.add(sfera_group_dyn, riempimento_vol_dyn, raggio_group_dyn)
+
+        # Animazione Scaling
+        testo_dipendenza = Text("Aumentando il raggio aumenta il volume", font_size=36, color=C_TEXT)
+        testo_dipendenza.to_edge(UP, buff=1.0)
+
+        self.play(r_tracker.animate.set_value(3.0), Write(testo_dipendenza), run_time=2.5, rate_func=rush_from)
+        self.wait(0.5)
+        self.play(r_tracker.animate.set_value(2.0), run_time=2.0, rate_func=smooth)
+        self.wait(1.0)
+        self.play(FadeOut(testo_dipendenza), run_time=1.0)
+        self.wait(0.5)
+
+        # ==========================================
+        # SCENA 6: FORMULA VOLUME
+        # ==========================================
+        
+        # [MODIFICA 3] (0:37) Colore #7D83FF
+        titolo_formula_vol = Text(
+            "Formula volume", 
+            font_size=40, 
+            color=C_ACCENT_PURPLE
+        ).to_corner(UL, buff=1.0)
+
+        formula_diretta = MathTex(
+            "V", "=", "{4 \\over 3}", "\\pi", "r^3",
+            font_size=70
+        )
+        formula_diretta.to_edge(UP, buff=0.5)
+        
+        self.play(
+            Write(formula_diretta),
+            FadeIn(titolo_formula_vol),
+            run_time=2.0
+        )
+        self.wait(2.0)
+
+        # ==========================================
+        # SCENA 7: LETTURA FORMULA
+        # ==========================================
+
+        # Congelamento (Freeze)
+        sfera_static = sfera_group_dyn.copy().clear_updaters()
+        liquid_static = riempimento_vol_dyn.copy().clear_updaters()
+        raggio_static = raggio_group_dyn.copy().clear_updaters()
+        
+        self.remove(sfera_group_dyn, riempimento_vol_dyn, raggio_group_dyn)
+        self.add(sfera_static, liquid_static, raggio_static)
+        
+        # Struttura Gruppo Totale
+        sfera_totale = VGroup(sfera_static, liquid_static, raggio_static)
+        
+        rect_r3 = SurroundingRectangle(formula_diretta[4], color=C_HIGHLIGHT, buff=0.1)
+        
+        self.play(
+            Create(rect_r3),
+            sfera_totale.animate.scale(1.15).set_rate_func(there_and_back),
+            run_time=2.0
+        )
+        self.wait(1.0)
+        
+        # Testo per Pi Greco
+        rect_pi = SurroundingRectangle(formula_diretta[3], color=C_HIGHLIGHT, buff=0.1)
+        text_pi = Text("pigreco = costante", font_size=32, color=YELLOW)
+        text_pi.next_to(sfera_totale, DOWN, buff=0.5)
+
+        self.play(
+            ReplacementTransform(rect_r3, rect_pi), 
+            FadeIn(text_pi),
+            run_time=1.0
+        )
+        self.wait(1.5)
+        
+        # Rimozione titolo formula volume e testo pi greco
+        self.play(
+            FadeOut(rect_pi), 
+            FadeOut(text_pi),
+            FadeOut(titolo_formula_vol),
+            run_time=1.0
+        )
+        self.wait(1.0)
+
+        # ==========================================
+        # SCENA 8: FORMULA INVERSA
+        # ==========================================
+
+        # [MODIFICA 4] (0:50 circa) Colore #7D83FF
+        titolo_formula_inv = Text(
+            "Formula inversa", 
+            font_size=40, 
+            color=C_ACCENT_PURPLE
+        ).to_corner(UL, buff=1.0)
+
+        formula_intermediate = MathTex("r^3", "=", "{3", "V", "\\over", "4", "\\pi}", font_size=70)
+        formula_intermediate.move_to(formula_diretta.get_center())
+
+        self.play(
+            TransformMatchingTex(formula_diretta, formula_intermediate, path_arc=90 * DEGREES, transform_mismatches=True),
+            FadeIn(titolo_formula_inv),
+            run_time=2.5
+        )
+        self.wait(0.5)
+
+        formula_final = MathTex("r", "=", "\\sqrt[3]{", "{3", "V", "\\over", "4", "\\pi}", "}", font_size=70)
+        formula_final.move_to(formula_diretta.get_center())
+
+        self.play(
+            TransformMatchingTex(formula_intermediate, formula_final, transform_mismatches=True),
+            run_time=2.5
+        )
+        
+        self.play(FadeOut(titolo_formula_inv), run_time=1.0)
+        self.wait(1.0)
+
+        # ==========================================
+        # SCENA 9: SIGNIFICATO FISICO
+        # ==========================================
+
+        explanation_text = Text("Serve per trovare il raggio conoscendo il volume", font_size=30, color=C_TEXT)
+        explanation_text.next_to(formula_final, DOWN, buff=5.0)
+
+        self.play(FadeIn(explanation_text, shift=UP * 0.2), run_time=1.0)
+        self.wait(0.5)
+
+        raggio_to_highlight = sfera_totale[2]
+        
+        self.play(Indicate(raggio_to_highlight, color=YELLOW, scale_factor=1.2), run_time=2.0)
+        self.wait(1.5)
+
+        self.play(FadeOut(formula_final), FadeOut(explanation_text), run_time=1.5)
+        self.wait(0.5)
+
+        # ==========================================
+        # SCENA 10: DATI PRATICI
+        # ==========================================
+
+        # A. Creazione Testi
+        text_full = Tex(r"Volume = $36\pi$ centimetri cubi", font_size=42, color=C_TEXT)
+        text_full.next_to(sfera_totale, UP, buff=1.0)
+        
+        text_short = Tex(r"Volume = $36\pi$", font_size=48, color=C_TEXT)
+        text_short.move_to(text_full.get_center())
+
+        # B. Animazione
+        self.play(Write(text_full), run_time=1.5)
+        self.wait(2.0)
+        self.play(TransformMatchingTex(text_full, text_short), run_time=1.0)
+        self.wait(1.0)
+
+        # ==========================================
+        # SCENA 11: CALCOLO
+        # ==========================================
+        
+        # 1. Spostamento a sinistra per fare spazio ai calcoli
+        left_group = VGroup(sfera_totale, text_short)
+        
+        self.play(left_group.animate.shift(LEFT * 3.5), run_time=1.5)
+
+        # 2. Mostra Formula Inversa (Lato Destro)
+        eq1 = MathTex(
+            "r", "=", "\\sqrt[3]{", "{3", "V", "\\over", "4", "\\pi}", "}",
+            color=C_TEXT, font_size=60
+        ).shift(RIGHT * 2.5 + UP * 1.5)
+
+        self.play(Write(eq1), run_time=1.5)
+        self.wait(0.5)
+
+        # 3. Sostituzione V = 36pi
+        eq2 = MathTex(
+            "r", "=", "\\sqrt[3]{", "{3", "\\cdot", "36\\pi", "\\over", "4", "\\pi}", "}",
+            color=C_TEXT, font_size=60
+        ).move_to(eq1.get_center())
+
+        self.play(Transform(eq1, eq2), run_time=1.5)
+        self.wait(0.5)
+
+        # 4. Semplificazione (Via pi greco, calcolo numeri: 3*9=27)
+        eq3 = MathTex(
+            "r", "=", "\\sqrt[3]{", "27", "}",
+            color=C_TEXT, font_size=60
+        ).move_to(eq1.get_center())
+
+        self.play(Transform(eq1, eq3), run_time=1.5)
+        self.wait(0.5)
+
+        # 5. Risultato Finale
+        eq4 = MathTex(
+            "r", "=", "3", "\\text{ cm}",
+            color=C_TEXT, font_size=80
+        ).move_to(eq1.get_center())
+
+        self.play(Transform(eq1, eq4), run_time=1.5)
+        
+        # 6. Aggiornamento Diagramma (Raggio diventa "3 cm")
+        old_label = sfera_totale[2][2]
+        radius_line = sfera_totale[2][1]
+        
+        new_label = MathTex("3\\text{ cm}", color=YELLOW, font_size=40)
+        new_label.next_to(radius_line, RIGHT, buff=0.1)
+        
+        self.play(
+            Transform(old_label, new_label),
+            Indicate(radius_line, color=YELLOW),
+            run_time=1.0
+        )
+        self.wait(1.0)
+
+        # 7. Pulizia Scene 11
+        self.play(
+            FadeOut(eq1),
+            FadeOut(text_short),
+            left_group.animate.shift(RIGHT * 3.5), # Torna al centro
+            run_time=1.5
+        )
+        self.wait(0.5)
+
+        # ==========================================
+        # SCENA 12: VERIFICA E CONCLUSIONE
+        # ==========================================
+
+        # 1. Sposta di nuovo per fare spazio alla verifica
+        self.play(sfera_totale.animate.shift(LEFT * 3.5), run_time=1.0)
+
+        # 2. Formula Diretta (Verifica)
+        eq_verify_1 = MathTex(
+            "V", "=", "{4", "\\over", "3}", "\\pi", "r", "^3",
+            color=C_TEXT, font_size=60
+        ).shift(RIGHT * 2.0 + UP * 1.5)
+
+        self.play(Write(eq_verify_1), run_time=1.0)
+
+        # 3. Sostituzione r=3
+        eq_verify_2 = MathTex(
+            "V", "=", "{4", "\\over", "3}", "\\pi", "(3)^3",
+            color=C_TEXT, font_size=60
+        ).move_to(eq_verify_1.get_center())
+
+        self.play(Transform(eq_verify_1, eq_verify_2), run_time=1.0)
+        
+        # 4. Risultato Verifica
+        eq_verify_3 = MathTex(
+            "V", "=", "36\\pi", "\\text{ cm}^3",
+            color=C_TEXT, font_size=80
+        ).move_to(eq_verify_1.get_center())
+
+        self.play(Transform(eq_verify_1, eq_verify_3), run_time=1.0)
+        self.wait(1.5)
+
+        # 5. Dissolvenza Totale
+        self.play(
+            FadeOut(sfera_totale),
+            FadeOut(eq_verify_1),
+            run_time=1.5
+        )
+
+        # 6. Messaggio Finale
+        # [MODIFICA 5] (1:29) "volume" #7D83FF, "raggio" #FFD972
+        final_text = Text(
+            "Il volume della sfera dipende solo dal raggio",
+            font_size=36,
+            color=C_TEXT,
+            t2c={"volume": C_ACCENT_PURPLE, "raggio": C_ACCENT_YELLOW}
+        )
+        
+        self.play(FadeIn(final_text), run_time=1.5)
+        self.wait(2.5)
+        self.play(FadeOut(final_text), run_time=1.5)
+        self.wait(0.5)
