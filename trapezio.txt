@@ -1,0 +1,422 @@
+%%manim -v WARNING -qh LezioneTrapezioCompleta
+
+from manim import *
+
+class LezioneTrapezioCompleta(Scene):
+    def construct(self):
+        # ==========================================
+        # SETUP GENERALE
+        # ==========================================
+        self.camera.background_color = WHITE
+        
+        # Helper config for Tex to ensure it's always black (visible on white bg)
+        # and uses sans-serif font (\mathsf) to look cleaner for geometry
+        base_tex_kwargs = {"color": BLACK}
+
+        # ==========================================
+        # FASE 1: INTRODUZIONE (Griglia e Titolo)
+        # ==========================================
+        
+        # 1. Griglia leggera
+        griglia = NumberPlane(
+            x_range=[-10, 10, 1],
+            y_range=[-10, 10, 1],
+            background_line_style={
+                "stroke_color": GREY_A,
+                "stroke_width": 2,
+                "stroke_opacity": 0.5
+            }
+        )
+        
+        # 2. Testi iniziali (Centrali)
+        # Using Tex. \textbf{} makes it bold.
+        titolo = Tex(r"\textbf{AREA E PERIMETRO DEL TRAPEZIO}", **base_tex_kwargs).scale(0.9)
+       
+        
+        gruppo_titoli = VGroup(titolo).arrange(DOWN, buff=0.4)
+
+        # 3. Animazione Intro
+        self.add(griglia)
+        self.play(Create(griglia), run_time=1)
+        
+        # Effetto zoom e comparsa testo
+        self.play(
+            FadeIn(gruppo_titoli, scale=0.5),
+            griglia.animate.scale(1.2),
+            run_time=2,
+            rate_func=smooth
+        )
+        self.wait(1)
+
+        # ==========================================
+        # FASE 2: SETUP GEOMETRIA (Titolo all'angolo)
+        # ==========================================
+
+        # Creiamo la configurazione target (Titolo piccolo all'angolo)
+        titolo_target = Tex(r"\textbf{AREA E PERIMETRO DEL TRAPEZIO}", font_size=24, **base_tex_kwargs)
+        titolo_target.to_corner(UL, buff=0.5)
+        
+        # Animazione di transizione: Titolo va all'angolo, griglia sparisce
+        self.play(
+            Transform(gruppo_titoli, VGroup(titolo_target)),  
+            FadeOut(griglia),
+            run_time=2
+        )
+
+        # ==========================================
+        # FASE 3: DISEGNO E DEFINIZIONE TRAPEZIO
+        # ==========================================
+
+        # Coordinate trapezio generico
+        offset_y = -1.0 
+        A = [-2.0, -1.5 + offset_y, 0] 
+        B = [2.0, -1.5 + offset_y, 0]  
+        C = [1.0, 1.0 + offset_y, 0] 
+        D = [-1.0, 1.0 + offset_y, 0]  
+
+        # Creazione linee
+        base_maggiore = Line(A, B, color=BLACK, stroke_width=4)
+        lato_dx = Line(B, C, color=BLACK, stroke_width=4)
+        base_minore = Line(C, D, color=BLACK, stroke_width=4)
+        lato_sx = Line(D, A, color=BLACK, stroke_width=4)
+
+        trapezio = VGroup(base_maggiore, lato_dx, base_minore, lato_sx)
+
+        self.play(Create(trapezio), run_time=1.5)
+
+        # Definizione testuale
+        # Note: \\ is used for newlines in Tex
+        label_def = Tex(r"\textbf{Definizione:}", color=BLUE_E, font_size=24)
+        frase_def = Tex(
+            r"Il trapezio è un quadrilatero con almeno una\\coppia di lati paralleli definiti basi.",
+            font_size=24,
+            **base_tex_kwargs
+        )
+        # Align texts properly
+        gruppo_definizione = VGroup(label_def, frase_def).arrange(RIGHT, buff=0.2, aligned_edge=UP)
+        gruppo_definizione.move_to(UP * 2.0) 
+
+        self.play(Write(gruppo_definizione), run_time=1.5)
+        self.wait(0.5)
+
+        # ==========================================
+        # FASE 4: ETICHETTE DEL TRAPEZIO
+        # ==========================================
+
+        # Elementi grafici aggiuntivi (Altezza)
+        proiezione_H = [D[0], A[1], 0]
+        altezza = DashedLine(D, proiezione_H, color=BLUE)
+        
+        # Etichette (Tex automatically creates nice math italics for letters)
+        lab_B = Tex(r"\textbf{B}", color=RED, font_size=30).next_to(base_maggiore, DOWN)
+        lab_b = Tex(r"\textbf{b}", color=RED, font_size=30).next_to(base_minore, UP)
+        lab_h = Tex(r"$h$", color=BLUE, font_size=26).next_to(altezza, LEFT, buff=0.1)
+        lab_l1 = Tex(r"$l_1$", font_size=26, **base_tex_kwargs).next_to(lato_sx, LEFT, buff=0.1)
+        lab_l2 = Tex(r"$l_2$", font_size=26, **base_tex_kwargs).next_to(lato_dx, RIGHT, buff=0.1)
+
+        # Animazione comparsa etichette
+        self.play(Create(altezza), FadeIn(lab_h, shift=RIGHT))
+        self.play(FadeIn(lab_B, shift=UP), FadeIn(lab_b, shift=DOWN))
+        self.play(FadeIn(lab_l1), FadeIn(lab_l2))
+        
+        self.wait(1)
+
+        # Raggruppiamo tutto il trapezio generico per spostarlo
+        gruppo_generico_completo = VGroup(
+            trapezio, altezza, 
+            lab_B, lab_b, lab_h, lab_l1, lab_l2
+        )
+
+        # ==========================================
+        # FASE 5: TRANSIZIONE AL PERIMETRO
+        # ==========================================
+
+        # 1. Via la definizione vecchia per fare spazio
+        self.play(FadeOut(gruppo_definizione, shift=UP))
+        
+        # 2. Sposta il trapezio a SINISTRA
+        self.play(gruppo_generico_completo.animate.to_edge(LEFT, buff=1.0), run_time=1.5)
+
+        # ==========================================
+        # FASE 6: DEFINIZIONE PERIMETRO (Colonna Destra)
+        # ==========================================
+
+        titolo_p = Tex(r"\textbf{IL PERIMETRO (P)}", font_size=32, **base_tex_kwargs)
+        spiegazione_p = Tex(
+            r"Il perimetro è la misura del contorno\\e si ottiene sommando i lati.",
+            font_size=28, **base_tex_kwargs
+        )
+        blocco_perimetro = VGroup(titolo_p, spiegazione_p).arrange(DOWN, buff=0.2, aligned_edge=LEFT)
+        blocco_perimetro.scale(0.8) 
+        blocco_perimetro.to_corner(UR, buff=0.5) 
+
+        self.play(Write(blocco_perimetro))
+
+        # Formula Generale (MathTex is better for pure formulas)
+        form_gen = MathTex(r"P = B + b + l_1 + l_2", color=BLACK, font_size=32)
+        form_gen.scale(0.9)
+        form_gen.next_to(blocco_perimetro, DOWN, buff=0.3)
+        
+        self.play(FadeIn(form_gen, shift=UP))
+        self.wait(1)
+
+        # ==========================================
+        # FASE 7: TRAPEZIO ISOSCELE
+        # ==========================================
+
+        # Setup Geometria Isoscele
+        A_iso = [-1.5, -1, 0]
+        B_iso = [1.5, -1, 0]
+        C_iso = [0.8, 0.8, 0]
+        D_iso = [-0.8, 0.8, 0]
+
+        b_mag_iso = Line(A_iso, B_iso, color=BLACK, stroke_width=4)
+        b_min_iso = Line(C_iso, D_iso, color=BLACK, stroke_width=4)
+        l_sx_iso = Line(D_iso, A_iso, color=TEAL, stroke_width=5)
+        l_dx_iso = Line(B_iso, C_iso, color=TEAL, stroke_width=5)
+
+        lb_iso_B = Tex(r"B", font_size=24, **base_tex_kwargs).next_to(b_mag_iso, DOWN, buff=0.1)
+        lb_iso_b = Tex(r"b", font_size=24, **base_tex_kwargs).next_to(b_min_iso, UP, buff=0.1)
+        lb_iso_l = Tex(r"$l$", color=TEAL, font_size=24).next_to(l_sx_iso, LEFT, buff=0.1)
+        lb_iso_l2 = Tex(r"$l$", color=TEAL, font_size=24).next_to(l_dx_iso, RIGHT, buff=0.1)
+
+        # Tacchette
+        tick_sx = Line(ORIGIN, RIGHT*0.2, color=TEAL).move_to(l_sx_iso.get_center()).rotate(l_sx_iso.get_angle() + PI/2)
+        tick_dx = Line(ORIGIN, RIGHT*0.2, color=TEAL).move_to(l_dx_iso.get_center()).rotate(l_dx_iso.get_angle() - PI/2)
+
+        gruppo_isoscele = VGroup(b_mag_iso, b_min_iso, l_sx_iso, l_dx_iso, lb_iso_B, lb_iso_b, lb_iso_l, lb_iso_l2, tick_sx, tick_dx)
+        gruppo_isoscele.scale(0.55)
+
+        # Posizionamento
+        gruppo_isoscele.next_to(form_gen, DOWN, buff=0.6)
+        gruppo_isoscele.align_to(blocco_perimetro, RIGHT).shift(LEFT * 0.5)
+
+        form_iso = MathTex(r"P = B + b + 2l", color=BLACK, font_size=32)
+        form_iso.scale(0.9)
+        form_iso.next_to(gruppo_isoscele, DOWN, buff=0.2)
+        box_iso = SurroundingRectangle(form_iso, color=TEAL, buff=0.1, stroke_width=2)
+
+        self.play(FadeIn(gruppo_isoscele, shift=UP))
+        self.play(Write(form_iso), Create(box_iso))
+        self.wait(0.5)
+
+        # ==========================================
+        # FASE 8: TRAPEZIO RETTANGOLO
+        # ==========================================
+
+        # Setup Geometria Rettangolo
+        A_rect = [-1.5, -1, 0]
+        B_rect = [1.5, -1, 0]
+        C_rect = [0.5, 0.8, 0]
+        D_rect = [-1.5, 0.8, 0]
+
+        b_mag_rect = Line(A_rect, B_rect, color=BLACK, stroke_width=4)
+        b_min_rect = Line(C_rect, D_rect, color=BLACK, stroke_width=4)
+        l_dritto_rect = Line(D_rect, A_rect, color=ORANGE, stroke_width=5)
+        l_obl_rect = Line(B_rect, C_rect, color=ORANGE, stroke_width=4)
+
+        # Angolo retto
+        line_v = Line(A_rect, D_rect)
+        line_h = Line(A_rect, B_rect)
+        right_angle = RightAngle(line_h, line_v, length=0.3, color=ORANGE, stroke_width=3)
+
+        lb_rect_B = Tex(r"B", font_size=24, **base_tex_kwargs).next_to(b_mag_rect, DOWN, buff=0.1)
+        lb_rect_b = Tex(r"b", font_size=24, **base_tex_kwargs).next_to(b_min_rect, UP, buff=0.1)
+        lb_rect_h = Tex(r"$h$", color=ORANGE, font_size=24).next_to(l_dritto_rect, LEFT, buff=0.1)
+        lb_rect_l = Tex(r"$l$", color=ORANGE, font_size=24).next_to(l_obl_rect, RIGHT, buff=0.1)
+
+        gruppo_rettangolo = VGroup(
+            b_mag_rect, b_min_rect, l_dritto_rect, l_obl_rect, 
+            right_angle,
+            lb_rect_B, lb_rect_b, lb_rect_h, lb_rect_l
+        )
+        gruppo_rettangolo.scale(0.55)
+
+        # Posizionamento
+        gruppo_rettangolo.next_to(box_iso, DOWN, buff=0.6)
+        gruppo_rettangolo.align_to(gruppo_isoscele, LEFT)
+
+        form_rect = MathTex(r"P = B + b + h + l", color=BLACK, font_size=32)
+        form_rect.scale(0.9)
+        form_rect.next_to(gruppo_rettangolo, DOWN, buff=0.2)
+        box_rect = SurroundingRectangle(form_rect, color=ORANGE, buff=0.1, stroke_width=2)
+
+        self.play(FadeIn(gruppo_rettangolo, shift=UP))
+        self.play(Write(form_rect))
+        self.play(Create(box_rect))
+
+        # Evidenziazione finale
+        self.play(
+            Indicate(l_dritto_rect, color=ORANGE),
+            Indicate(l_obl_rect, color=ORANGE),
+            Indicate(form_rect, color=ORANGE)
+        )
+        
+        self.wait(1)
+
+        # ==========================================
+        # FASE 9: PULIZIA E RITORNO AL CENTRO
+        # ==========================================
+
+        # Pulizia colonna destra (Perimetro)
+        gruppo_destra = VGroup(
+            gruppo_isoscele, form_iso, box_iso,
+            gruppo_rettangolo, form_rect, box_rect,
+            blocco_perimetro, form_gen
+        )
+
+        self.play(
+            FadeOut(gruppo_destra),
+            run_time=1.5
+        )
+
+        # Il trapezio originale torna al centro
+        self.play(
+            gruppo_generico_completo.animate.move_to(ORIGIN),
+            run_time=2,
+            rate_func=smooth
+        )
+
+        # ==========================================
+        # FASE 10: DEFINIZIONE AREA
+        # ==========================================
+
+        # Testo definizione
+        titolo_area = Tex(r"\textbf{DEFINIZIONE DI AREA}", font_size=36, **base_tex_kwargs)
+        desc_area = Tex(
+            r"L'area misura la superficie interna della figura.",
+            font_size=24, **base_tex_kwargs
+        )
+        gruppo_area = VGroup(titolo_area, desc_area).arrange(DOWN, buff=0.2, aligned_edge=LEFT)
+        gruppo_area.to_corner(UR, buff=0.8) # In alto a destra
+
+        self.play(Write(gruppo_area))
+
+        # ==========================================
+        # FASE 11: CREAZIONE PARALLELOGRAMMA (Visuale)
+        # ==========================================
+        
+        # 1. Creiamo i riempimenti colorati (Area)
+        # Riempimento trapezio originale (Blue)
+        fill_orig = Polygon(A, B, C, D, color=BLUE, fill_opacity=0.3, stroke_width=0).move_to(trapezio.get_center())
+        
+        # 2. Creiamo la COPIA del trapezio + Riempimento (Teal)
+        trapezio_copy = trapezio.copy()
+        fill_copy = fill_orig.copy().set_color(TEAL).set_opacity(0.3)
+        
+        # Gruppo che ruoterà
+        gruppo_rotante = VGroup(trapezio_copy, fill_copy)
+        
+        # Mostriamo il riempimento originale e facciamo apparire la copia sovrapposta
+        self.play(FadeIn(fill_orig), FadeIn(gruppo_rotante))
+        self.wait(0.5)
+
+        # 3. Calcolo punto di rotazione (Punto medio del lato obliquo destro)
+        lato_perno = lato_dx 
+        punto_rotazione = lato_perno.get_center()
+
+        # 4. Animazione ROTAZIONE (180 gradi attorno al lato obliquo)
+        self.play(
+            Rotate(gruppo_rotante, angle=PI, about_point=punto_rotazione),
+            run_time=2,
+            rate_func=smooth
+        )
+        self.wait(0.5)
+
+        # --- TRASLAZIONE VERSO SINISTRA ---
+        # Raggruppiamo tutto il parallelogramma formato
+        parallelogramma_totale = VGroup(
+            gruppo_generico_completo, # Trapezio Orig + Etichette
+            fill_orig,                # Colore Orig
+            gruppo_rotante            # Trapezio Copia + Colore
+        )
+
+        # Spostiamo tutto a sinistra per fare spazio al testo a destra
+        self.play(parallelogramma_totale.animate.to_edge(LEFT, buff=1.0), run_time=1.5)
+
+        # ==========================================
+        # FASE 12: SPIEGAZIONE E FORMULA
+        # ==========================================
+
+        # Testo teoria (spostato a destra)
+        # Tex supports colored substrings nicely via tex_to_color_map
+        spiegazione_para = Tex(
+            r"Affiancando due trapezi otteniamo\\un parallelogramma con base pari\\alla somma delle basi (B + b).",
+            font_size=28, 
+            tex_to_color_map={"parallelogramma": RED, "somma delle basi": RED},
+            **base_tex_kwargs
+        )
+        spiegazione_para.next_to(gruppo_area, DOWN, buff=0.5)
+        spiegazione_para.align_to(gruppo_area, LEFT)
+
+        self.play(Write(spiegazione_para))
+
+        # Etichette sulla copia capovolta 
+        base_minore_copy = trapezio_copy[2]
+        base_maggiore_copy = trapezio_copy[0]
+
+        lbl_b_copy = Tex(r"\textbf{b}", color=RED, font_size=30).next_to(base_minore_copy, DOWN, buff=0.1)
+        lbl_B_copy = Tex(r"\textbf{B}", color=RED, font_size=30).next_to(base_maggiore_copy, UP, buff=0.1)
+
+        self.play(FadeIn(lbl_b_copy), FadeIn(lbl_B_copy))
+
+        # Parentesi graffa (Base parallelogramma)
+        intervallo_base_totale = VGroup(base_maggiore, base_minore_copy)
+        brace = Brace(intervallo_base_totale, DOWN, buff=0.4)
+        txt_brace = brace.get_text("$B + b$").set_color(BLACK).scale(0.8)
+
+        self.play(Create(brace), Write(txt_brace))
+        self.wait(0.5)
+
+        # --- FORMULA FINALE ---
+        
+        # Testo di raccordo
+        conclusione = Tex(r"Quindi l'area è la metà del parallelogramma:", font_size=24, **base_tex_kwargs)
+        conclusione.next_to(spiegazione_para, DOWN, buff=0.5)
+        conclusione.align_to(spiegazione_para, LEFT)
+
+        # Formula in LaTeX (already was MathTex-like in concept, now officially MathTex)
+        formula_finale = MathTex(r"A = \frac{(B + b) \cdot h}{2}", color=BLACK, font_size=42)
+        formula_finale.next_to(conclusione, DOWN, buff=0.3)
+        
+        # Coloriamo "h" di blu per richiamare l'altezza geometrica
+        formula_finale.set_color_by_tex("h", BLUE)
+
+        # Riquadro rosso attorno alla formula
+        box_finale = SurroundingRectangle(formula_finale, color=RED, buff=0.2, stroke_width=3)
+
+        self.play(Write(conclusione))
+        self.play(Write(formula_finale))
+        self.play(Create(box_finale))
+
+        self.wait(3)
+        
+        # ==========================================
+        # FASE 13: CHIUSURA (Pulizia e Focus Finale)
+        # ==========================================
+
+        # 1. Identificare gli elementi "in eccesso"
+        elementi_da_rimuovere = VGroup(
+            gruppo_rotante,       
+            brace, txt_brace,     
+            lbl_b_copy, lbl_B_copy, 
+            spiegazione_para,     
+            conclusione,          
+            gruppo_area,          
+            formula_finale, box_finale 
+        )
+
+        # 2. Sfuma via tutto ciò che non è il trapezio originale
+        self.play(FadeOut(elementi_da_rimuovere), run_time=1.5)
+
+        # 3. Il trapezio originale torna al centro
+        gruppo_finale = VGroup(gruppo_generico_completo, fill_orig)
+
+        self.play(
+            gruppo_finale.animate.move_to(ORIGIN),
+            run_time=2,
+            rate_func=smooth
+        )
+
+        # 4. Fade out totale
+        self.play(FadeOut(gruppo_finale), run_time=1)
