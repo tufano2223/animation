@@ -1,0 +1,327 @@
+%%manim -qm -v WARNING RuffiniMasterIntegration
+
+from manim import *
+
+class RuffiniMasterIntegration(Scene):
+    def construct(self):
+        # --- 1. CONFIGURAZIONE COLORI E STILI (Da RuffiniScene1) ---
+        self.camera.background_color = BLACK
+        
+        COL_TITOLO = GREEN
+        COL_FRECCIA_STD = ORANGE
+        COL_PETROLIO = "#005F6A"
+        COL_ROSSO = RED
+        COL_RADICE = "#17C5E6" # Ciano chiaro per coerenza fasi successive
+        COL_RISULTATI = YELLOW
+        COL_BIANCO = WHITE
+        
+        # Variabile per controllare lo spazio verticale uniforme
+        SPAZIO_RIGHE = 0.6 
+
+        # =======================================================
+        # FASE 1: INTRO E VERIFICA (Codice RuffiniScene1 integrato)
+        # =======================================================
+
+        # --- TITOLO ---
+        titolo = Text("RUFFINI", color=COL_TITOLO, font_size=72)
+        titolo.move_to(ORIGIN) 
+        self.play(Write(titolo))
+        
+        self.play(
+            titolo.animate.to_edge(UP, buff=0.5).scale(0.6),
+            run_time=5
+        )
+        self.wait(3)
+
+        # --- EQUAZIONE PRINCIPALE ---
+        eq_text = MathTex("x^3 - 3x^2 - 2x + 4", "=", "0")
+        eq_text[1].set_color(COL_ROSSO)
+        eq_text[2].set_color(COL_ROSSO)
+        
+        # Posizionamento
+        eq_text.next_to(titolo, DOWN, buff=1)
+        
+        self.play(Write(eq_text), run_time=3)
+        self.wait(3)
+
+        # --- INDICAZIONE RADICE (x=1) ---
+        label_radice = MathTex("x = 1", color=COL_RADICE) # Uso Ciano per visibilità
+        
+        # Spostato molto a destra come richiesto
+        label_radice.next_to(eq_text, DOWN, buff=SPAZIO_RIGHE).shift(RIGHT * 4.5)
+        
+        # Freccia curva ampia
+        freccia_verifica = Arrow(
+            start=eq_text[2].get_bottom() + DOWN * 0.1, 
+            end=label_radice.get_left(),
+            color=COL_FRECCIA_STD,
+            buff=0.1,
+            stroke_width=3,
+            max_tip_length_to_length_ratio=0.15,
+            path_arc=1.5 
+        )
+        
+        self.play(
+            GrowArrow(freccia_verifica),
+            Write(label_radice),
+            run_time=4
+        )
+        self.wait(3)
+
+        # --- CALCOLI DI VERIFICA (3 Righe) ---
+        
+        # Riga 1: Sostituzione
+        calc_row_1 = MathTex(
+            "1", "^3 - 3 \\cdot ", "1", "^2 - 2 \\cdot ", "1", " + 4", 
+            "=", "0"
+        )
+        calc_row_1[0].set_color(COL_PETROLIO)
+        calc_row_1[2].set_color(COL_PETROLIO)
+        calc_row_1[4].set_color(COL_PETROLIO)
+        calc_row_1[6].set_color(COL_ROSSO)
+        calc_row_1[7].set_color(COL_ROSSO)
+
+        # Riga 2: Somma algebrica
+        calc_row_2 = MathTex("1 - 3 - 2 + 4", "=", "0")
+        calc_row_2[1].set_color(COL_ROSSO)
+        calc_row_2[2].set_color(COL_ROSSO)
+
+        # Riga 3: Identità
+        calc_row_3 = MathTex("0", "=", "0")
+        calc_row_3[1].set_color(COL_ROSSO)
+        calc_row_3[2].set_color(COL_ROSSO)
+
+        # Posizionamento a destra (align_to RIGHT)
+        calc_row_1.next_to(eq_text, DOWN, buff=SPAZIO_RIGHE)
+        calc_row_1.align_to(eq_text, RIGHT)
+        
+        calc_row_2.next_to(calc_row_1, DOWN, buff=SPAZIO_RIGHE)
+        calc_row_2.align_to(calc_row_1, RIGHT)
+
+        calc_row_3.next_to(calc_row_2, DOWN, buff=SPAZIO_RIGHE)
+        calc_row_3.align_to(calc_row_2, RIGHT)
+        
+        calcoli_group = VGroup(calc_row_1, calc_row_2, calc_row_3)
+
+        # Esecuzione Animazioni Verifica
+        self.play(FadeIn(calc_row_1, shift=UP * 0.2))
+        self.play(FadeIn(calc_row_2, shift=UP * 0.2))
+        self.play(FadeIn(calc_row_3, shift=UP * 0.2))
+        
+        # Check di conferma
+        check_mark = Text("✔", color=GREEN).next_to(calc_row_3, RIGHT)
+        self.play(Write(check_mark))
+        self.wait(1.5)
+
+        # =======================================================
+        # FASE 2: GRIGLIA RUFFINI (Transizione Pulita)
+        # =======================================================
+
+        # Pulizia Fase 1 (Teniamo titolo e creiamo riferimenti nuovi)
+        self.play(
+            FadeOut(calcoli_group),
+            FadeOut(check_mark),
+            FadeOut(freccia_verifica),
+            FadeOut(eq_text),     # Dissolviamo per ricrearla piccola
+            FadeOut(label_radice) # Dissolviamo per ricrearla piccola
+        )
+
+        # --- EQUAZIONE DI RIFERIMENTO ALLINEATA ---
+        # Creiamo l'equazione divisa in pezzi per l'allineamento verticale
+        eq_ref = MathTex("x^3", "-3x^2", "-2x", "+4", font_size=44)
+        eq_ref.move_to(UP * 2) 
+        # Distribuiamo i termini orizzontalmente in modo che corrispondano alla griglia
+        eq_ref[0].set_x(-1.2)
+        eq_ref[1].set_x(0.3)
+        eq_ref[2].set_x(1.6)
+        eq_ref[3].set_x(3.2)
+        
+        rad_ref = MathTex("x = 1", font_size=40, color=COL_RADICE).to_corner(UR, buff=1)
+        self.play(Write(eq_ref), Write(rad_ref))
+        # Configurazione Griglia
+        POS_GRIGLIA = DOWN * 0.5
+        
+        l_vert1 = Line(UP*1.5, DOWN*1.5).move_to(POS_GRIGLIA + LEFT*2)
+        l_vert2 = Line(UP*1.5, DOWN*1.5).move_to(POS_GRIGLIA + RIGHT*2.5)
+        l_oriz = Line(LEFT*4, RIGHT*4).move_to(POS_GRIGLIA + DOWN*0.2)
+        
+        griglia = VGroup(l_vert1, l_vert2, l_oriz)
+        self.play(Create(griglia))
+
+        # Coefficienti
+        k_val = MathTex("1", color=COL_RADICE).move_to(POS_GRIGLIA + LEFT*2.5 + UP*0.6)
+        c1 = MathTex("1").move_to(POS_GRIGLIA + LEFT*1.2 + UP*0.6)
+        c2 = MathTex("-3").move_to(POS_GRIGLIA + RIGHT*0.3 + UP*0.6) 
+        c3 = MathTex("-2").move_to(POS_GRIGLIA + RIGHT*1.6 + UP*0.6)
+        c4 = MathTex("4").move_to(POS_GRIGLIA + RIGHT*3.2 + UP*0.6)
+        
+        coeffs = VGroup(k_val, c1, c2, c3, c4)
+        self.play(Write(coeffs))
+
+        # Algoritmo Ruffini
+        res1 = MathTex("1", color=COL_RISULTATI).move_to(POS_GRIGLIA + LEFT*1.2 + DOWN*0.8)
+        arrow_down = Arrow(c1.get_bottom(), res1.get_top(), buff=0.1, color=GREY, stroke_width=2)
+        self.play(Create(arrow_down), FadeIn(res1))
+        self.play(FadeOut(arrow_down))
+
+        numeri_griglia = VGroup(res1)
+        calcoli_intermedi = VGroup()
+
+        # [Moltiplicatore, Risultato, PosizioneX, CoeffSopra]
+        steps = [
+            ("1", "-2", 0.3, c2),
+            ("-2", "-4", 1.6, c3),
+            ("-4", "0", 3.2, c4)
+        ]
+
+        curr_res = res1 
+
+        for val_mul, val_somma, x_pos, coeff_top in steps:
+
+            steps = [
+            ("1", "-2", 0.3, c2),
+            ("-2", "-4", 1.6, c3),
+            ("-4", "0", 3.2, c4)
+        ]
+
+        # ... (Tutto il codice precedente rimane uguale fino a qui) ...
+
+        curr_res = res1 
+
+        # Ciclo sui passaggi
+        for val_mul, val_somma, x_pos, coeff_top in steps:
+            
+            # --- CALCOLO DELLA POSIZIONE DI DESTINAZIONE (NUMERO ROSA) ---
+            target_pos = POS_GRIGLIA + RIGHT*x_pos + UP*0.2
+            
+            # 1. FRECCIA VERSO IL MOLTIPLICATORE (DAL SOTTO)
+            # Parte da sotto il risultato giallo e curva verso il basso per arrivare sotto al numero blu
+            f_to_k = CurvedArrow(
+                curr_res.get_bottom() + DOWN * 0.1,  # Start: Sotto il giallo
+                k_val.get_bottom() + DOWN * 0.1,     # End: Sotto il blu (x=1)
+                angle=-TAU/3,                        # Angolo NEGATIVO = Curva a "U" (passa sotto)
+                color=PINK, 
+                stroke_width=3,
+                tip_length=0.2
+            )
+            lbl_mul = MathTex("\\times", color=PINK, font_size=30)
+            
+            lbl_mul.move_to(f_to_k.point_from_proportion(0.5)).shift(DOWN * 0.25)
+            
+            # 2. FRECCIA DAL MOLTIPLICATORE ALLA DESTINAZIONE
+            # Parte dal numero blu e va al posto del numero rosa
+            f_to_mid = CurvedArrow(
+                k_val.get_right(), 
+                target_pos + LEFT * 0.2,
+                angle=TAU/10,                        # Leggera curva naturale
+                color=PINK, 
+                stroke_width=3,
+                tip_length=0.2
+            )
+
+            # --- ESECUZIONE ANIMAZIONE MOLTIPLICAZIONE ---
+            
+            # A. Disegna la freccia che passa sotto e illumina il blu
+            self.play(
+                Create(f_to_k), 
+                FadeIn(lbl_mul, shift=UP*0.1), # Il simbolo appare delicatamente
+                run_time=0.6
+            )
+            self.play(Indicate(k_val, color=PINK, scale_factor=1.5), run_time=3)
+            
+            # B. Appare il numero moltiplicato (rosa)
+            txt_mul = MathTex(val_mul, color=PINK, font_size=36)
+            txt_mul.move_to(target_pos)
+            
+            # C. Freccia che porta il risultato in posizione
+            self.play(
+                Create(f_to_mid),
+                Write(txt_mul),
+                run_time=0.8
+            )
+            
+            # D. Pulizia frecce (fade out per non sporcare)
+            self.play(FadeOut(f_to_k), FadeOut(f_to_mid),FadeOut(lbl_mul), run_time=3)
+
+            # --- ESECUZIONE SOMMA (IDENTICA A PRIMA) ---
+            txt_sum = MathTex(val_somma, color=COL_RISULTATI if val_somma != "0" else COL_ROSSO)
+            txt_sum.move_to(POS_GRIGLIA + RIGHT*x_pos + DOWN*0.8)
+            
+            # Freccia verticale somma
+            f_sum = Arrow(coeff_top.get_bottom(), txt_sum.get_top(), color=WHITE, stroke_width=2, buff=0.1)
+            
+            self.play(
+                Create(f_sum),
+                Write(txt_sum),
+                run_time=0.7
+            )
+            self.play(FadeOut(f_sum), run_time=1)
+
+            # Aggiornamenti per il prossimo ciclo
+            calcoli_intermedi.add(txt_mul)
+            numeri_griglia.add(txt_sum)
+            curr_res = txt_sum
+
+        # ... (Il resto del codice rimane uguale) ...
+
+        # Evidenziare Resto
+        box_resto = SurroundingRectangle(curr_res, color=COL_ROSSO, buff=0.1)
+        lbl_resto = Text("Resto 0", font_size=20, color=COL_ROSSO).next_to(box_resto, DOWN)
+        self.play(Create(box_resto), Write(lbl_resto))
+        self.wait(1)
+
+        # =======================================================
+        # FASE 3: SOLUZIONI (Layout Pulito)
+        # =======================================================
+
+        # Pulizia Fase 2
+        self.play(
+            FadeOut(griglia), FadeOut(coeffs), FadeOut(numeri_griglia),
+            FadeOut(calcoli_intermedi), FadeOut(box_resto), FadeOut(lbl_resto),
+            FadeOut(eq_ref), FadeOut(rad_ref),
+            run_time=4
+        )
+
+        # Scrittura Fattorizzata
+        eq_fatt = MathTex("(x - 1)(x^2 - 2x - 4) = 0", font_size=48)
+        eq_fatt.move_to(UP * 2)
+        eq_fatt[0][1:4].set_color(COL_RADICE)
+        eq_fatt[0][5:14].set_color(COL_RISULTATI)
+        self.play(Write(eq_fatt))
+
+        # Caso 1: x=1
+        sol1 = MathTex("x_1 = 1", color=COL_RADICE, font_size=50)
+        sol1.move_to(LEFT * 3)
+        arr1 = Arrow(eq_fatt.get_bottom() + LEFT, sol1.get_top(), color=GREY)
+        self.play(GrowArrow(arr1), FadeIn(sol1, shift=DOWN))
+        self.wait(3)
+
+        # Caso 2: Quadratica
+        eq_quad = MathTex("x^2 - 2x - 4 = 0", color=COL_RISULTATI, font_size=40)
+        eq_quad.move_to(RIGHT * 3.5 + UP * 0.5)
+        arr2 = Arrow(eq_fatt.get_bottom() + RIGHT, eq_quad.get_top() + LEFT*0.5, color=GREY)
+        self.play(GrowArrow(arr2), Write(eq_quad))
+        self.wait(3)
+
+        # Delta
+        delta_tex = MathTex("\\Delta = 20", font_size=32).next_to(eq_quad, DOWN, buff=0.4)
+        self.play(Write(delta_tex))
+        self.wait(4)
+
+        # Soluzioni x2,3
+        x_sol_tex = MathTex("x_{2,3} = 1 \\pm \\sqrt{5}", font_size=36).next_to(delta_tex, DOWN, buff=0.4)
+        self.play(Write(x_sol_tex))
+        self.wait(4)
+
+        # =======================================================
+        # FASE 4: FINE
+        # =======================================================
+
+        # Fade out totale
+        oggetti_finali = VGroup(titolo, eq_fatt, sol1, arr1, eq_quad, arr2, delta_tex, x_sol_tex)
+        self.play(FadeOut(oggetti_finali), run_time=3)
+
+        # Scritta FINE
+        scritta_fine = Text("FINE", font_size=120, color=WHITE).move_to(ORIGIN)
+        self.play(Write(scritta_fine), run_time=2)
+        self.wait(3)
