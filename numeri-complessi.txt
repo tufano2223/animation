@@ -1,0 +1,234 @@
+%%manim -qm -v WARNING VideoCompletoNumeriComplessi
+
+from manim import *
+
+class VideoCompletoNumeriComplessi(Scene):
+    def construct(self):
+        # --- CONFIGURAZIONE COLORI E COSTANTI ---
+        self.camera.background_color = BLACK
+        
+        COL_REALE = "#00BFFF"   # Blu
+        COL_IMMAG = "#FF0000"   # Rosso
+        COL_TESTO = WHITE
+        COL_GRIGLIA = GREY_D
+        COL_PUNTO = YELLOW
+        SIMBOLO_IMM = "j"
+        
+        VAL_RE = 3
+        VAL_IM = 2
+
+        # ==========================================
+        # SCENA 1: Titolo Intro (circa 3 sec)
+        # ==========================================
+        titolo_intro = Text("Rappresentare i\nnumeri complessi", font_size=50, color=COL_TESTO)
+        
+        self.play(Write(titolo_intro), run_time=1.5)
+        self.wait(1.0)
+        self.play(FadeOut(titolo_intro), run_time=0.5)
+
+        # ==========================================
+        # SCENA 2: L'equazione (circa 4 sec)
+        # ==========================================
+        # Scriviamo z = 3 + 2j al centro
+        math_z = MathTex("z", "=", "3", "+", "2", SIMBOLO_IMM, font_size=70)
+        # Coloriamo subito le parti per chiarezza (opzionale, ma aiuta le scene successive)
+        # 0:z, 1:=, 2:3, 3:+, 4:2, 5:j
+        
+        self.play(Write(math_z), run_time=1.5)
+        self.wait(2.0)
+
+        # ==========================================
+        # SCENA 3: Parte Reale (circa 5 sec)
+        # ==========================================
+        # Indichiamo il "3"
+        brace_re = Brace(math_z[2], DOWN, color=COL_REALE)
+        txt_re = brace_re.get_text("Parte Reale").set_color(COL_REALE)
+        
+        self.play(
+            math_z[2].animate.set_color(COL_REALE),
+            GrowFromCenter(brace_re),
+            FadeIn(txt_re),
+            run_time=1.5
+        )
+        self.wait(2.0)
+        self.play(FadeOut(brace_re), FadeOut(txt_re), run_time=0.5)
+
+        # ==========================================
+        # SCENA 4: Parte Immaginaria (circa 5 sec)
+        # ==========================================
+        # Indichiamo "2j"
+        brace_im = Brace(math_z[4:], DOWN, color=COL_IMMAG)
+        txt_im = brace_im.get_text("Parte Immaginaria").set_color(COL_IMMAG)
+        
+        self.play(
+            math_z[4:].animate.set_color(COL_IMMAG),
+            GrowFromCenter(brace_im),
+            FadeIn(txt_im),
+            run_time=1.5
+        )
+        self.wait(2.0)
+        self.play(FadeOut(brace_im), FadeOut(txt_im), run_time=0.5)
+
+        # ==========================================
+        # SCENA 5: Testo definizione (circa 6 sec)
+        # ==========================================
+        txt_def = Text(
+            ' "Ogni numero complesso è formato da \nuna parte reale e una parte immaginaria" ', 
+            font_size=30, slant=ITALIC
+        ).to_edge(DOWN, buff=1.0)
+        
+        self.play(Write(txt_def), run_time=2.0)
+        self.wait(3.0)
+        self.play(FadeOut(txt_def), run_time=1.0)
+
+        # ==========================================
+        # SCENA 6: Transizione (circa 2 sec)
+        # ==========================================
+        # Spostiamo l'equazione in alto a sinistra e la rimpiccioliamo
+        self.play(
+            math_z.animate.scale(0.6).to_corner(UL, buff=0.5),
+            run_time=1.5
+        )
+        self.wait(0.5)
+
+        # ==========================================
+        # SCENA 7: Creazione Piano (circa 5 sec)
+        # ==========================================
+        piano_complesso = NumberPlane(
+            x_range=[-1, 6, 1],
+            y_range=[-1, 5, 1],
+            background_line_style={"stroke_color": COL_GRIGLIA, "stroke_opacity": 0.3},
+            axis_config={"color": WHITE, "include_numbers": False}
+        )
+        
+        # Etichette assi personalizzate
+        lbl_R = Text("R", font_size=36, color=COL_REALE, weight=BOLD).next_to(piano_complesso.x_axis.get_end(), DOWN)
+        lbl_I = Text("I", font_size=36, color=COL_IMMAG, weight=BOLD).next_to(piano_complesso.y_axis.get_end(), LEFT).shift(DOWN)
+        
+        self.play(
+            Create(piano_complesso),
+            run_time=2.0
+        )
+        self.play(
+            Write(lbl_R), 
+            Write(lbl_I), 
+            run_time=1.0
+        )
+        self.wait(1.0)
+
+        # ==========================================
+        # SCENA 8: Punti sugli assi (circa 6 sec)
+        # ==========================================
+        # Punto Reale (3)
+        dot_asse_re = Dot(piano_complesso.c2p(VAL_RE, 0), color=COL_REALE, radius=0.08)
+        # Animazione flash o comparsa
+        self.play(TransformFromCopy(math_z[2], dot_asse_re), run_time=1.0)
+        
+        # Punto Immaginario (2)
+        dot_asse_im = Dot(piano_complesso.c2p(0, VAL_IM), color=COL_IMMAG, radius=0.08)
+        self.play(TransformFromCopy(math_z[4], dot_asse_im), run_time=1.0)
+        
+        self.wait(2.0)
+
+        # ==========================================
+        # SCENA 9: Individuare il punto (circa 8 sec)
+        # ==========================================
+        # Linee tratteggiate
+        linea_vert = DashedLine(
+            start=piano_complesso.c2p(VAL_RE, 0), 
+            end=piano_complesso.c2p(VAL_RE, VAL_IM), 
+            color=COL_REALE
+        )
+        linea_horiz = DashedLine(
+            start=piano_complesso.c2p(0, VAL_IM), 
+            end=piano_complesso.c2p(VAL_RE, VAL_IM), 
+            color=COL_IMMAG
+        )
+        
+        self.play(Create(linea_vert), Create(linea_horiz), run_time=2.0)
+        
+        # Punto finale Giallo
+        dot_z = Dot(piano_complesso.c2p(VAL_RE, VAL_IM), color=COL_PUNTO, radius=0.12)
+        lbl_coord = MathTex("(3, 2)", font_size=30, color=COL_PUNTO).next_to(dot_z, UR, buff=0.1)
+        
+        self.play(FadeIn(dot_z, scale=0.5), run_time=0.5)
+        self.play(Write(lbl_coord), run_time=1.0)
+        self.wait(2.0)
+
+        # ==========================================
+        # SCENA 10: Significato Geometrico (circa 6 sec)
+        # ==========================================
+        txt_geo = Text("Un numero complesso corrisponde a un punto del piano", font_size=28, color=COL_TESTO)
+        txt_geo.to_edge(DOWN, buff=0.5)
+        
+        self.play(
+            Write(txt_geo),
+            linea_vert.animate.set_opacity(0.4),
+            linea_horiz.animate.set_opacity(0.4),
+            run_time=1.5
+        )
+        self.wait(2.5)
+        self.play(FadeOut(txt_geo), run_time=1.0)
+
+        # ==========================================
+        # SCENA 11: Interpretazione Vettoriale (circa 8 sec)
+        # ==========================================
+        vettore_z = Arrow(
+            start=piano_complesso.c2p(0,0), 
+            end=piano_complesso.c2p(VAL_RE, VAL_IM), 
+            buff=0, color=WHITE, stroke_width=3, 
+            max_tip_length_to_length_ratio=0.15
+        )
+        
+        # Assicuriamo che il punto giallo sia sopra la freccia
+        self.add(vettore_z, dot_z) 
+        
+        txt_vec = Text("Questo punto può essere visto come un vettore che parte dall'origine", font_size=24, color=COL_TESTO)
+        txt_vec.to_edge(DOWN, buff=0.5)
+
+        self.play(GrowArrow(vettore_z), run_time=2.0)
+        self.play(Write(txt_vec), run_time=1.5)
+        self.wait(3.0)
+        # Non facciamo FadeOut del testo qui se non richiesto esplicitamente, 
+        # ma per pulizia della scena successiva lo togliamo.
+        self.play(FadeOut(txt_vec), run_time=0.5)
+
+        # ==========================================
+        # SCENA 12: Nome del piano (circa 6 sec)
+        # ==========================================
+        txt_piano_1 = Text("Piano complesso", font_size=40, color=COL_TESTO).to_edge(UP, buff=1.0)
+        txt_piano_2 = Text("o piano di Argand-Gauss", font_size=30, color=GREY_B).next_to(txt_piano_1, DOWN, buff=0.2)
+        
+        # Freccia inclinata che punta dentro la griglia (4.2, 1.8)
+        freccia_curva = CurvedArrow(
+            start_point=txt_piano_2.get_right() + RIGHT * 0.2,
+            end_point=piano_complesso.c2p(4.2, 1.8), 
+            angle=-TAU/4, 
+            color=COL_TESTO
+        )
+        
+        self.play(Write(txt_piano_1), run_time=1.0)
+        self.play(FadeIn(txt_piano_2, shift=UP*0.2), run_time=1.0)
+        self.play(Create(freccia_curva), run_time=1.5)
+        self.wait(2.0)
+
+        # ==========================================
+        # SCENA 13: Finale (circa 4 sec)
+        # ==========================================
+        # Raggruppiamo tutto ciò che è a schermo
+        tutti_gli_oggetti = Group(
+            math_z, piano_complesso, lbl_R, lbl_I, 
+            dot_asse_re, dot_asse_im, 
+            linea_vert, linea_horiz, 
+            dot_z, lbl_coord, vettore_z,
+            txt_piano_1, txt_piano_2, freccia_curva
+        )
+        
+        self.play(FadeOut(tutti_gli_oggetti), run_time=1.5)
+        
+        txt_finale = Text("I numeri complessi uniscono algebra e geometria", font_size=40, color=COL_TESTO)
+        
+        self.play(FadeIn(txt_finale), run_time=1.5)
+        self.wait(2.0)
+        self.play(FadeOut(txt_finale), run_time=2.0)
+        self.wait(1.0)
