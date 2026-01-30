@@ -1,0 +1,322 @@
+%%manim -qm -v WARNING LezioneCompletaCilindro
+
+from manim import *
+import numpy as np
+
+class LezioneCompletaCilindro(ThreeDScene):
+    def construct(self):
+        # --- CONFIGURAZIONE GENERALE ---
+        self.camera.background_color = BLACK
+        
+        # Colori personalizzati
+        COLORE_TITOLO = "#00BFFF" 
+        COLORE_CILINDRO_TXT = "#0081AF"
+        COLORE_SVILUPPO = "#D14081"
+        COLORE_AREA = "#EFAAC4"
+        COLORE_BASI = YELLOW
+        COLORE_VOLUME_TITOLO = "#00FFFF"
+        COLORE_DIAMETRO = ORANGE
+        COLORE_ALTEZZA = RED
+
+        # ==========================================
+        # PARTE 0: INTRODUZIONE ASSOLUTA (Nuova Scena)
+        # ==========================================
+        
+        # Titolo grande centrale
+        titolo_intro = Text("Il Cilindro", font_size=90, weight=BOLD, color=COLORE_TITOLO)
+        titolo_intro.move_to(ORIGIN)
+
+        self.play(Write(titolo_intro), run_time=2)
+        self.wait(1.0)
+        self.play(FadeOut(titolo_intro), run_time=1.0)
+        self.wait(0.5)
+
+
+        # ==========================================
+        # PARTE 1: GEOMETRIA E PARTI (Scena 2D Standard)
+        # ==========================================
+        
+        # Titolo più piccolo in alto per la sezione
+        titolo = Text("Il Cilindro", font_size=60, weight=BOLD, color=COLORE_TITOLO)
+        titolo.to_edge(UP, buff=0.5)
+
+        # Geometria Cilindro 2D
+        raggio_visivo = 1.5
+        altezza_visiva = 4.0 
+        cilindro_anchor = RIGHT * 3.5
+        
+        base_top = Ellipse(width=raggio_visivo*2, height=0.8, color=WHITE, stroke_width=4)
+        base_bottom = Ellipse(width=raggio_visivo*2, height=0.8, color=WHITE, stroke_width=4)
+        base_top.move_to(cilindro_anchor + UP * (altezza_visiva/2))
+        base_bottom.move_to(cilindro_anchor + DOWN * (altezza_visiva/2))
+        lato_sinistro = Line(base_top.get_left(), base_bottom.get_left(), color=WHITE, stroke_width=4)
+        lato_destro = Line(base_top.get_right(), base_bottom.get_right(), color=WHITE, stroke_width=4)
+        cilindro_group = VGroup(base_top, base_bottom, lato_sinistro, lato_destro)
+
+        self.play(Write(titolo), Create(cilindro_group), run_time=1.5)
+        
+        # Testo descrittivo
+        t1 = Text("Il cilindro è una figura", font_size=32, color=WHITE)
+        t2 = Text("geometrica tridimensionale", font_size=32)
+        t3_pre = Text("formata da ", font_size=32)
+        t3_basi = Text("2 basi", font_size=32, color=COLORE_BASI, weight=BOLD)
+        t3_group = VGroup(t3_pre, t3_basi).arrange(RIGHT, buff=0.1)
+        t4 = Text("e un rettangolo avvolto.", font_size=32)
+
+        descrizione = VGroup(t1, t2, t3_group, t4).arrange(DOWN, aligned_edge=LEFT, buff=0.2)
+        descrizione.to_edge(LEFT, buff=1.0).shift(UP*0.5)
+
+        self.play(Write(t1), Write(t2), run_time=1.5)
+        self.play(Write(t3_group), run_time=1)
+
+        self.play(
+            base_top.animate.set_color(COLORE_BASI).set_stroke(width=6).set_fill(color=COLORE_BASI, opacity=0.4),
+            base_bottom.animate.set_color(COLORE_BASI).set_stroke(width=6).set_fill(color=COLORE_BASI, opacity=0.4),
+            run_time=1
+        )
+        self.play(
+            base_top.animate.set_color(WHITE).set_stroke(width=4).set_fill(opacity=0),
+            base_bottom.animate.set_color(WHITE).set_stroke(width=4).set_fill(opacity=0),
+            Write(t4), 
+            run_time=1
+        )
+
+        # Quote
+        center_top = base_top.get_center()
+        center_bottom = base_bottom.get_center()
+        point_circumference = base_bottom.get_right()
+        linea_h = DashedLine(center_top, center_bottom, color=RED)
+        label_h = MathTex("h", color=RED).next_to(linea_h, LEFT, buff=0.1)
+        linea_r = Line(center_bottom, point_circumference, color=YELLOW)
+        label_r = MathTex("r", color=YELLOW).next_to(linea_r, UP, buff=0.1)
+        angolo = RightAngle(linea_h, linea_r, length=0.3, quadrant=(-1,1))
+
+        self.play(Create(linea_h), Write(label_h))
+        self.play(Create(linea_r), Create(angolo), Write(label_r))
+        self.wait(2)
+
+        self.play(FadeOut(Group(*self.mobjects)))
+
+
+        # ==========================================
+        # PARTE 2: CILINDRO EQUILATERO (Misto 2D/3D)
+        # ==========================================
+        
+        titolo_eq = Text("Cilindro Equilatero", font_size=48, color=BLUE).to_edge(UP)
+        def_eq = VGroup(
+            Text("Si dice equilatero quando:", font_size=36),
+            MathTex(r"Diametro = Altezza", font_size=44, color=YELLOW),
+            MathTex(r"2r = h", font_size=44, color=YELLOW)
+        ).arrange(DOWN, buff=0.3)
+        
+        # Fase 2D iniziale: animazione normale
+        self.play(Write(titolo_eq), Write(def_eq))
+        self.wait(2)
+        self.play(FadeOut(def_eq))
+
+        # --- INIZIO FASE 3D ---
+        # Qui dobbiamo fissare il titolo perché la camera si muoverà
+        self.add_fixed_in_frame_mobjects(titolo_eq)
+        
+        self.move_camera(phi=75 * DEGREES, theta=-30 * DEGREES, run_time=1.5)
+        
+        r_eq = 1.2
+        h_eq = 2.4 
+        cil_eq = Cylinder(radius=r_eq, height=h_eq, resolution=(24, 24))
+        cil_eq.set_style(fill_opacity=0.4, stroke_width=1, stroke_color=BLUE_E)
+        cil_eq.move_to(IN * 0.5) 
+
+        asse_h = Line3D(start=cil_eq.get_bottom(), end=cil_eq.get_top(), color=COLORE_ALTEZZA)
+        asse_d = Line3D(start=cil_eq.get_bottom() + LEFT*r_eq, end=cil_eq.get_bottom() + RIGHT*r_eq, color=COLORE_DIAMETRO)
+        
+        self.play(Create(cil_eq), run_time=1.5)
+        self.play(Create(asse_h), Create(asse_d))
+        
+        l_h = MathTex("h", color=COLORE_ALTEZZA).next_to(titolo_eq, DOWN, buff=2).to_edge(RIGHT, buff=2)
+        l_d = MathTex("d=2r", color=COLORE_DIAMETRO).next_to(l_h, DOWN, buff=0.5)
+        
+        # Qui usiamo add_fixed perché siamo in 3D
+        self.add_fixed_in_frame_mobjects(l_h, l_d)
+        self.play(Write(l_h), Write(l_d))
+
+        self.wait(1)
+        self.play(FadeOut(cil_eq), FadeOut(l_h), FadeOut(l_d), run_time=0.5)
+        self.remove(titolo_eq) # Rimuoviamo manualmente l'oggetto fisso
+
+        # Ritorno al 2D
+        linea_confronto_h = Line(DOWN*1.2, UP*1.2, color=COLORE_ALTEZZA, stroke_width=6)
+        linea_confronto_d = Line(LEFT*1.2, RIGHT*1.2, color=COLORE_DIAMETRO, stroke_width=6)
+        linea_confronto_d.move_to(DOWN*1.2)
+        self.remove(asse_h, asse_d) 
+        self.add(linea_confronto_h, linea_confronto_d) 
+        
+        # Reset camera
+        self.move_camera(phi=0, theta=-90*DEGREES, run_time=1.0)
+        
+        # Ora siamo di nuovo in 2D puro
+        lbl_h_2d = MathTex("h", color=COLORE_ALTEZZA).next_to(linea_confronto_h, LEFT, buff=0.2)
+        self.play(Write(lbl_h_2d))
+
+        self.play(
+            linea_confronto_d.animate.rotate(90*DEGREES).next_to(linea_confronto_h, RIGHT, buff=0.5),
+            run_time=1.5
+        )
+        
+        uguale = MathTex("=", font_size=60).next_to(linea_confronto_h, RIGHT, buff=-0.25).shift(RIGHT*0.25)
+        final_label = MathTex(r"h = 2r").next_to(linea_confronto_h, UP, buff=0.5)
+        
+        self.play(FadeIn(uguale), Write(final_label))
+        self.wait(2)
+        self.play(FadeOut(Group(*self.mobjects)))
+
+
+        # ==========================================
+        # PARTE 3: SVILUPPO PIANO (Misto)
+        # ==========================================
+        
+        titolo_sv = Text("Sviluppo Piano", font_size=40, color=COLORE_SVILUPPO).to_edge(UP)
+        box_testo = VGroup(
+            Tex(r"Se tagliamo il cilindro e", font_size=34),
+            Tex(r"lo stendiamo su un piano,", font_size=34),
+            Tex(r"otteniamo il suo \textbf{sviluppo}.", color=COLORE_SVILUPPO, font_size=34)
+        ).arrange(DOWN, aligned_edge=LEFT)
+        box_testo.to_edge(LEFT, buff=0.5)
+
+        # Inizio 2D: Animazione fluida
+        self.play(Write(titolo_sv), Write(box_testo))
+        
+        # Prepariamo oggetti 3D
+        r, h = 1.0, 2.5
+        cil_sviluppo = Cylinder(radius=r, height=h, resolution=(32, 32))
+        cil_sviluppo.set_style(fill_opacity=0.6, fill_color=TEAL, stroke_color=WHITE)
+        cil_sviluppo.move_to(RIGHT * 2.5) 
+
+        # Fissiamo i testi prima di muovere la camera
+        self.add_fixed_in_frame_mobjects(titolo_sv)
+        self.add_fixed_in_frame_mobjects(box_testo)
+
+        self.move_camera(phi=60 * DEGREES, theta=-45 * DEGREES, run_time=1.5)
+        self.play(Create(cil_sviluppo))
+        self.wait(0.5)
+
+        larg_rett = 2 * PI * r
+        rettangolo = Rectangle(width=larg_rett, height=h, color=WHITE, fill_color=TEAL, fill_opacity=0.5)
+        cerchio_sup = Circle(radius=r, color=WHITE, fill_color=TEAL, fill_opacity=0.5)
+        cerchio_inf = Circle(radius=r, color=WHITE, fill_color=TEAL, fill_opacity=0.5)
+        center_pos = RIGHT * 2.5
+        rettangolo.move_to(center_pos)
+        cerchio_sup.next_to(rettangolo, UP, buff=0)
+        cerchio_inf.next_to(rettangolo, DOWN, buff=0)
+        sviluppo_group = VGroup(rettangolo, cerchio_sup, cerchio_inf)
+
+        self.play(Rotate(cil_sviluppo, angle=90*DEGREES, axis=UP), run_time=0.5)
+        
+        self.move_camera(
+            phi=0 * DEGREES, theta=-90 * DEGREES, 
+            added_anims=[ReplacementTransform(cil_sviluppo, sviluppo_group)],
+            run_time=2.0
+        )
+        
+        # Siamo tornati in 2D. Rimuoviamo il "fix" per pulizia, sebbene visivamente identico
+        self.remove(titolo_sv, box_testo)
+        self.add(titolo_sv) # Riaggiungiamo come oggetto normale
+        self.play(FadeOut(box_testo))
+
+        freccia_base = DoubleArrow(rettangolo.get_corner(DL)+DOWN*0.2, rettangolo.get_corner(DR)+DOWN*0.2, buff=0, color=YELLOW, max_tip_length_to_length_ratio=0.1)
+        lbl_base = MathTex(r"2\pi r", color=YELLOW).next_to(freccia_base, DOWN, buff=0.1)
+        desc_base = Text("Circonferenza", font_size=24, color=YELLOW).next_to(lbl_base, DOWN, buff=0.1)
+        freccia_h = DoubleArrow(rettangolo.get_corner(UL)+LEFT*0.2, rettangolo.get_corner(DL)+LEFT*0.2, buff=0, color=RED, max_tip_length_to_length_ratio=0.1)
+        lbl_h = MathTex("h", color=RED).next_to(freccia_h, LEFT, buff=0.1)
+
+        self.play(GrowFromCenter(freccia_base), Write(lbl_base), Write(desc_base))
+        self.play(GrowFromCenter(freccia_h), Write(lbl_h))
+        self.wait(2)
+        self.play(FadeOut(Group(*self.mobjects)))
+
+
+        # ==========================================
+        # PARTE 4: AREA TOTALE (Scena 2D Pura)
+        # ==========================================
+        
+        titolo_area = Text("Area Totale", font_size=48, color=COLORE_AREA).to_edge(UP)
+        self.play(Write(titolo_area))
+
+        rett_area = Rectangle(width=4, height=2, color=BLUE, fill_opacity=0.3)
+        c_sup = Circle(radius=0.63, color=RED, fill_opacity=0.5).next_to(rett_area, UP, buff=0.1)
+        c_inf = Circle(radius=0.63, color=RED, fill_opacity=0.5).next_to(rett_area, DOWN, buff=0.1)
+        grafico_area = VGroup(rett_area, c_sup, c_inf).to_edge(RIGHT, buff=1.5)
+        
+        self.play(FadeIn(grafico_area))
+
+        eq_start = MathTex("A_{tot} =", font_size=50).to_edge(LEFT, buff=1).shift(UP*1)
+        eq_lat = MathTex("A_{lat}", color=BLUE, font_size=50).next_to(eq_start, RIGHT)
+        val_lat = MathTex(r"(2\pi r \cdot h)", color=BLUE, font_size=40).next_to(eq_lat, DOWN, buff=0.5)
+        eq_plus = MathTex("+", font_size=50).next_to(eq_lat, RIGHT)
+        eq_base = MathTex("2 \cdot A_{base}", color=RED, font_size=50).next_to(eq_plus, RIGHT)
+        val_base = MathTex(r"2 \cdot (\pi r^2)", color=RED, font_size=40).move_to(val_lat.get_center()).align_to(eq_base, LEFT)
+
+        self.play(Write(eq_start))
+        self.play(Indicate(rett_area, color=BLUE), Write(eq_lat))
+        self.play(Write(val_lat))
+        self.play(Write(eq_plus))
+        self.play(Indicate(c_sup, color=RED), Indicate(c_inf, color=RED), Write(eq_base))
+        self.play(Write(val_base))
+
+        formula_finale = MathTex(r"A_{tot} = 2\pi r h + 2\pi r^2", font_size=45).next_to(val_lat, DOWN, buff=1.5).align_to(eq_start, LEFT)
+        box_finale = SurroundingRectangle(formula_finale, color=COLORE_AREA, buff=0.2)
+        
+        self.play(TransformFromCopy(VGroup(val_lat, val_base), formula_finale))
+        self.play(Create(box_finale))
+        self.wait(2)
+        self.play(FadeOut(Group(*self.mobjects)))
+
+
+        # ==========================================
+        # PARTE 5: VOLUME (Scena 2D Pura)
+        # ==========================================
+        
+        titolo_vol = Text("Volume del Cilindro", font_size=50, color=COLORE_VOLUME_TITOLO).to_edge(UP)
+        
+        cil_vol_grp = VGroup()
+        e_top = Ellipse(width=3, height=1, color=WHITE).shift(UP*1.5)
+        e_bot = Ellipse(width=3, height=1, color=WHITE).shift(DOWN*1.5)
+        l_l = Line(e_top.get_left(), e_bot.get_left())
+        l_r = Line(e_top.get_right(), e_bot.get_right())
+        area_base_fill = e_bot.copy().set_fill(YELLOW, opacity=0.5).set_stroke(width=0)
+        cil_vol_grp.add(e_bot, area_base_fill, e_top, l_l, l_r)
+        cil_vol_grp.scale(0.8).to_edge(RIGHT, buff=2)
+
+        self.play(Write(titolo_vol), Create(cil_vol_grp))
+
+        p_start_h = l_r.get_bottom()
+        p_end_h = l_r.get_top()
+        vettore_h = DoubleArrow(start=p_start_h + RIGHT * 0.3, end=p_end_h + RIGHT * 0.3, color=COLORE_ALTEZZA, buff=0, tip_length=0.2)
+        label_vettore_h = MathTex("h", color=COLORE_ALTEZZA).next_to(vettore_h, RIGHT, buff=0.1)
+
+        self.play(Create(vettore_h), Write(label_vettore_h))
+
+        txt_vol = VGroup(
+            Text("Area di base", color=YELLOW, font_size=32),
+            Text("x", font_size=32),
+            Text("Altezza", color=RED, font_size=32)
+        ).arrange(RIGHT, buff=0.2)
+        txt_vol.to_edge(LEFT, buff=1).shift(UP*1)
+
+        form_vol = MathTex(r"V = \pi r^2 \cdot h", font_size=60)
+        form_vol.next_to(txt_vol, DOWN, buff=1)
+        form_vol[0][2:5].set_color(YELLOW) 
+        form_vol[0][6].set_color(RED)       
+
+        inv_title = Text("Formule Inverse:", font_size=28, weight=BOLD).next_to(form_vol, DOWN, buff=1).align_to(txt_vol, LEFT)
+        inv_r = MathTex(r"r = \sqrt{\frac{V}{\pi h}}", font_size=38)
+        inv_h = MathTex(r"h = \frac{V}{\pi r^2}", font_size=38)
+        inv_group = VGroup(inv_r, inv_h).arrange(RIGHT, buff=1).next_to(inv_title, DOWN, buff=0.3)
+
+        self.play(Write(txt_vol))
+        self.play(area_base_fill.animate.scale(1.2).scale(1/1.2), Indicate(form_vol[0][2:5], color=YELLOW), run_time=1.5)
+        self.play(Write(form_vol), Indicate(vettore_h, color=COLORE_ALTEZZA, scale_factor=1.1))
+        self.play(Write(inv_title))
+        self.play(Write(inv_group))
+        
+        self.wait(3)
+        self.play(FadeOut(Group(*self.mobjects)))
