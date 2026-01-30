@@ -1,0 +1,205 @@
+%%manim -qm -v WARNING LeFunzioniLineari
+
+from manim import *
+
+# --- CONFIGURAZIONE STILE GLOBALE ---
+COL_SFONDO = BLACK
+COL_INK = WHITE
+COL_GRID = GREY_D
+COL_RETTA = RED
+COL_HIGHLIGHT_M = YELLOW
+COL_HIGHLIGHT_Q = ORANGE
+COL_TITOLO = "#FF595E"
+# FONT_STD non serve più perché usiamo il font di default di LaTeX
+
+class LeFunzioniLineari(Scene):
+    def construct(self):
+        self.camera.background_color = COL_SFONDO
+
+        # ==========================================
+        # FASE 1: INTRODUZIONE
+        # ==========================================
+        
+        # MODIFICA: Uso Tex invece di Text per il font LaTeX
+        # \textbf{...} serve per il grassetto in LaTeX
+        titolo = Tex(
+            r"\textbf{Le funzioni lineari}", 
+            color=COL_TITOLO, 
+            font_size=70 
+        )
+        
+        self.play(FadeIn(titolo, scale=1.2), run_time=1)
+        self.wait(1.5)
+        self.play(FadeOut(titolo), run_time=1)
+
+        # ==========================================
+        # FASE 2: SETUP PIANO E RETTA
+        # ==========================================
+        
+        axes = Axes(
+            x_range=[-6, 6, 1],
+            y_range=[-4, 4, 1],
+            x_length=7,
+            y_length=5,
+            axis_config={
+                "color": COL_INK, 
+                "include_numbers": True, 
+                "font_size": 20,
+                "tip_width": 0.2,
+                "tip_height": 0.2
+            }
+        ).to_edge(LEFT, buff=0.5)
+
+        labels = axes.get_axis_labels(x_label="x", y_label="y")
+        graph_group = VGroup(axes, labels)
+
+        m_tracker = ValueTracker(0.5) 
+        q_tracker = ValueTracker(1.0) 
+
+        line_graph = always_redraw(lambda: 
+            axes.plot(
+                lambda x: m_tracker.get_value() * x + q_tracker.get_value(), 
+                color=COL_RETTA,
+                stroke_width=4
+            )
+        )
+
+        formula_esplicita = MathTex("y", "=", "m", "x", "+", "q", font_size=60)
+        formula_esplicita.to_corner(DR, buff=1.0).shift(LEFT * 1)
+
+        self.play(
+            Create(axes, lag_ratio=0.1), 
+            Write(labels), 
+            run_time=2
+        )
+        self.play(Write(formula_esplicita))
+        self.play(Create(line_graph))
+        self.wait(1)
+
+        # ==========================================
+        # FASE 3: SPIEGAZIONE PARAMETRI (m e q)
+        # ==========================================
+
+        # --- ANIMAZIONE DI m ---
+        arrow_m = Arrow(start=UP, end=DOWN, color=COL_HIGHLIGHT_M).scale(1.2)
+        arrow_m.next_to(formula_esplicita[2], UP, buff=0.2)
+        
+        # MODIFICA: Tex per la descrizione
+        txt_m = Tex(
+            r"$m$: indica l'angolazione della retta", 
+            font_size=30, 
+            color=COL_HIGHLIGHT_M
+        )
+        txt_m.next_to(arrow_m, UP, buff=0.1)
+
+        self.play(
+            GrowArrow(arrow_m),
+            Write(txt_m),
+            formula_esplicita[2].animate.set_color(COL_HIGHLIGHT_M)
+        )
+
+        self.play(m_tracker.animate.set_value(2), run_time=2)    
+        self.play(m_tracker.animate.set_value(-1), run_time=2) 
+        self.play(m_tracker.animate.set_value(0.5), run_time=2)  
+
+        self.play(
+            FadeOut(arrow_m),
+            FadeOut(txt_m),
+            formula_esplicita[2].animate.set_color(COL_INK)
+        )
+
+        # --- ANIMAZIONE DI q ---
+        arrow_q = Arrow(start=UP, end=DOWN, color=COL_HIGHLIGHT_Q).scale(1.2)
+        arrow_q.next_to(formula_esplicita[5], UP, buff=0.2)
+        
+        # MODIFICA: Tex per la descrizione
+        txt_q = Tex(
+            r"$q$: intercetta all'origine", 
+            font_size=30, 
+            color=COL_HIGHLIGHT_Q
+        )
+        txt_q.next_to(arrow_q, UP, buff=0.1)
+
+        dot_q = always_redraw(lambda: 
+            Dot(axes.c2p(0, q_tracker.get_value()), color=COL_HIGHLIGHT_Q, radius=0.12)
+        )
+        circle_q = always_redraw(lambda:
+            Circle(radius=0.3, color=COL_HIGHLIGHT_Q).move_to(dot_q.get_center())
+        )
+
+        self.play(
+            GrowArrow(arrow_q),
+            formula_esplicita[5].animate.set_color(COL_HIGHLIGHT_Q)
+        )
+        self.play(Create(dot_q), Create(circle_q), Write(txt_q))
+
+        self.play(q_tracker.animate.set_value(3), run_time=1)
+        self.play(q_tracker.animate.set_value(-2), run_time=1.5)
+        self.play(q_tracker.animate.set_value(1), run_time=1)
+
+        self.play(
+            FadeOut(arrow_q),
+            FadeOut(txt_q),
+            FadeOut(dot_q),
+            FadeOut(circle_q),
+            formula_esplicita[5].animate.set_color(COL_INK)
+        )
+        self.wait(1)
+
+        # ==========================================
+        # FASE 4: TRASFORMAZIONE ALGEBRICA
+        # ==========================================
+
+        formula_implicita = MathTex("m", "x", "-", "y", "+", "q", "=", "0", font_size=60)
+        formula_implicita.to_corner(UL, buff=1.0).shift(RIGHT * 1)
+
+        self.play(
+            graph_group.animate.to_edge(RIGHT, buff=0.5),
+            formula_esplicita.animate.move_to(formula_implicita.get_center()),
+            run_time=1.5
+        )
+
+        # MODIFICA: Tex per l'etichetta
+        lbl_esplicita = Tex(r"Forma esplicita della retta", font_size=34, color=YELLOW)
+        lbl_esplicita.next_to(formula_esplicita, DOWN, buff=0.2)
+        self.play(Write(lbl_esplicita))
+        self.wait(1)
+        self.play(FadeOut(lbl_esplicita))
+
+        self.play(
+            TransformMatchingTex(
+                formula_esplicita, 
+                formula_implicita,
+                path_arc=90 * DEGREES,
+                transform_mismatches=True
+            ),
+            run_time=2
+        )
+
+        # MODIFICA: Tex per l'etichetta
+        lbl_implicita = Tex(r"Forma implicita della retta", font_size=34, color=BLUE)
+        lbl_implicita.next_to(formula_implicita, DOWN, buff=0.2)
+        self.play(Write(lbl_implicita))
+        self.wait(2)
+        self.play(FadeOut(lbl_implicita))
+
+        formula_finale = MathTex("y", "=", "m", "x", "+", "q", font_size=60)
+        formula_finale.move_to(formula_implicita)
+
+        self.play(
+            TransformMatchingTex(
+                formula_implicita,
+                formula_finale,
+                path_arc=-90 * DEGREES,
+                transform_mismatches=True
+            ),
+            run_time=2
+        )
+
+        # MODIFICA: Tex per la conclusione
+        conclusione = Tex(r"Le due forme descrivono la stessa retta.", font_size=40, color=GREEN).shift(LEFT * 0.5)
+        conclusione.next_to(formula_finale, DOWN, buff=0.5).shift(RIGHT * 1)
+        
+        self.play(Write(conclusione))
+        self.wait(3)
+        self.play(FadeOut(conclusione), FadeOut(formula_finale), FadeOut(graph_group), FadeOut(line_graph))
