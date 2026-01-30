@@ -1,0 +1,229 @@
+%%manim -qm -v WARNING LezioneAttritoRefined
+
+from manim import *
+import random
+import numpy as np
+
+class LezioneAttritoRefined(Scene):
+    def construct(self):
+        # --- CONFIGURAZIONE COLORI DIDATTICI ---
+        self.c_sfondo = BLACK
+        self.c_testo = WHITE
+        self.c_blocco = WHITE      
+        self.c_piano = GREY         
+        self.c_forza = GREEN        
+        self.c_attrito = RED        
+        self.c_titolo_speciale = "#8DA7BE" 
+
+        self.camera.background_color = self.c_sfondo
+
+        # Configurazione trasparenza
+        self.stile_blocco = {
+            "fill_color": self.c_blocco,
+            "fill_opacity": 0.3, 
+            "stroke_color": WHITE,
+            "stroke_width": 3 
+        }
+
+        # --- ESECUZIONE SEQUENZIALE ---
+        self.parte_1_introduzione()
+        self.parte_2_osservazione_macro()
+        self.parte_3_spiegazione_micro()
+        self.parte_4_confronto_modelli()
+        self.parte_5_definizione_finale()
+
+    # -----------------------------------------------------------------
+    # PARTE 1: TITOLO
+    # -----------------------------------------------------------------
+    def parte_1_introduzione(self):
+        titolo_principale = Text("La Forza di Attrito", font_size=60, weight=BOLD, color=self.c_titolo_speciale)
+        self.play(FadeIn(titolo_principale, shift=UP), run_time=1.5)
+        self.wait(2)
+        self.play(FadeOut(titolo_principale))
+
+    # -----------------------------------------------------------------
+    # PARTE 2: OSSERVAZIONE MACROSCOPICA
+    # -----------------------------------------------------------------
+    def parte_2_osservazione_macro(self):
+        # Setup Scena
+        piano = Line(LEFT * 7, RIGHT * 7, color=self.c_piano, stroke_width=3).shift(DOWN * 1.5)
+        blocco = Square(side_length=1.5, **self.stile_blocco)
+        
+        # 1) CORREZIONE POSIZIONE: Spostato da LEFT*5 a LEFT*3.5
+        # Così la freccia a sinistra del blocco non esce dallo schermo
+        blocco.next_to(piano, UP, buff=0).shift(LEFT * 3.5)
+        
+        label_massa = MathTex("m", color=WHITE).next_to(blocco, UP, buff=0.2)
+        gruppo_blocco = VGroup(blocco, label_massa)
+
+        self.play(Create(piano), FadeIn(gruppo_blocco))
+        self.wait(0.5)
+
+        # --- Applicazione Forza ---
+        freccia_spinta = Arrow(start=LEFT, end=RIGHT, color=self.c_forza, buff=0.1)
+        freccia_spinta.next_to(blocco, LEFT, buff=0.2)
+        label_spinta = Text("Spinta", font_size=24, color=self.c_forza).next_to(freccia_spinta, UP, buff=0.1)
+        
+        desc_spinta = Text("Forza esterna che causa il movimento", font_size=32, color=self.c_forza)
+        desc_spinta.to_edge(UP, buff=2) 
+
+        self.play(GrowArrow(freccia_spinta), FadeIn(label_spinta))
+        self.play(Write(desc_spinta)) 
+        self.wait(1.0)
+
+        # Il blocco continua a muoversi senza fermarsi
+        tutto_mobile = VGroup(gruppo_blocco, freccia_spinta, label_spinta)
+
+        self.play(
+            tutto_mobile.animate.shift(RIGHT * 9), 
+            FadeOut(desc_spinta), 
+            run_time=4, 
+            rate_func=linear 
+        )
+        
+        self.play(FadeOut(piano), FadeOut(tutto_mobile))
+
+    # -----------------------------------------------------------------
+    # PARTE 3: IL MONDO MICROSCOPICO
+    # -----------------------------------------------------------------
+    def parte_3_spiegazione_micro(self):
+        titolo = Text("Cosa accade tra le superfici?", font_size=32).to_edge(UP, buff=0.5)
+        self.play(Write(titolo))
+
+        piano = Line(LEFT * 5, RIGHT * 5, color=self.c_piano).shift(DOWN * 1.5)
+        blocco = Square(side_length=2.5, **self.stile_blocco).next_to(piano, UP, buff=0)
+        
+        self.add(piano, blocco)
+        self.wait(1)
+
+        center_point = piano.get_center()
+        y_level = piano.get_y()
+        
+        # Preparazione asperità (invisibili per ora)
+        asperita = VGroup()
+        random.seed(10)
+        start_x, end_x = center_point[0] - 1.2, center_point[0] + 1.2
+        num_punti = 30
+        step = (end_x - start_x) / num_punti
+
+        for i in range(num_punti):
+            x = start_x + i * step
+            h1 = random.uniform(0.05, 0.2)
+            l1 = Line([x, y_level, 0], [x, y_level + h1, 0], color=GREY_A, stroke_width=2)
+            h2 = random.uniform(0.05, 0.2)
+            offset_incastro = random.uniform(-0.02, 0.02)
+            l2 = Line([x + offset_incastro, y_level + 0.05, 0], [x + offset_incastro, y_level - h2 + 0.05, 0], color=BLUE_A, stroke_width=2)
+            asperita.add(l1, l2)
+
+        self.play(FadeOut(titolo))
+
+        # --- Spiegazione visuale dell'attrito ---
+        freccia_attrito = Arrow(ORIGIN, LEFT * 2, color=self.c_attrito, stroke_width=6)
+        freccia_attrito.next_to(blocco, LEFT, buff=0.3) 
+        
+        testo_attrito_lbl = Text("ATTRITO", font_size=36, color=self.c_attrito, weight=BOLD)
+        testo_attrito_lbl.next_to(freccia_attrito, UP, buff=0.1).shift(LEFT * 0.8)
+
+        desc_attrito_breve = Text("Forza resistiva che si oppone al moto", font_size=32, color=self.c_attrito)
+        desc_attrito_breve.to_edge(UP, buff=1.5)
+
+        self.play(GrowArrow(freccia_attrito), Write(testo_attrito_lbl))
+        self.play(Write(desc_attrito_breve)) 
+        self.wait(0.5)
+
+        testo_spiegazione_cause = Text(
+            "Le irregolarità delle superfici si incastrano",
+            font_size=24, color=WHITE
+        ).next_to(desc_attrito_breve, DOWN, buff=0.5)
+
+        self.play(
+            Write(testo_spiegazione_cause),
+            Create(asperita, lag_ratio=0.05)
+        )
+        
+        self.play(
+            Indicate(testo_spiegazione_cause, color=YELLOW, scale_factor=1.1),
+            Indicate(asperita, color=YELLOW, scale_factor=1.2),
+            run_time=1.5
+        )
+        self.wait(2)
+
+        self.play(FadeOut(Group(*self.mobjects)))
+
+    # -----------------------------------------------------------------
+    # PARTE 4: CONFRONTO
+    # -----------------------------------------------------------------
+    def parte_4_confronto_modelli(self):
+        divisore = DashedLine(UP*3, DOWN*3, color=GREY)
+        titolo_sx = Text("Mondo Ideale", color=BLUE, font_size=28).move_to(UP*3 + LEFT*3.5)
+        sub_sx = Text("(Senza attrito)", color=BLUE_B, font_size=20).next_to(titolo_sx, DOWN)
+        titolo_dx = Text("Mondo Reale", color=RED, font_size=28).move_to(UP*3 + RIGHT*3.5)
+        sub_dx = Text("(Con attrito)", color=RED_B, font_size=20).next_to(titolo_dx, DOWN)
+
+        self.play(Create(divisore), Write(titolo_sx), Write(sub_sx), Write(titolo_dx), Write(sub_dx))
+
+        # Setup Scena SX (Mondo Ideale)
+        p_sx = Line(LEFT*6.5, LEFT*0.5).shift(DOWN*0.5)
+        b_sx = Square(side_length=1, **self.stile_blocco).move_to(LEFT*5.5 + UP*0)
+        
+        # 2) RIMOSSO: v_sx (Freccia verde)
+        # v_sx = Arrow(LEFT, RIGHT, color=GREEN).next_to(b_sx, RIGHT, buff=0.1).scale(0.6)
+        
+        # 3) MODIFICA: Colore testo BLUE (Azzurro)
+        lbl_v_sx = MathTex(r"\vec{v} = cost.", color=BLUE, font_size=24).next_to(b_sx, UP, buff=0.2)
+
+        # Setup Scena DX (Mondo Reale)
+        p_dx = Line(RIGHT*0.5, RIGHT*6.5).shift(DOWN*0.5)
+        
+        rugosita = VGroup(*[
+            Line(
+                [x, -0.5, 0],      
+                [x+0.1, -0.4, 0],  
+                color=YELLOW,      
+                stroke_width=2
+            ) 
+            for x in np.arange(0.5, 6.5, 0.2)
+        ])
+        
+        b_dx = Square(side_length=1, **self.stile_blocco).move_to(RIGHT*1.5 + UP*0)
+        f_att = Arrow(RIGHT, LEFT, color=RED).next_to(b_dx, LEFT, buff=0.1).scale(0.8)
+        lbl_att = Text("F_attrito", color=RED, font_size=20).next_to(f_att, UP, buff=0.1)
+
+        # Modificato play per togliere v_sx
+        self.play(
+            Create(p_sx), FadeIn(b_sx), Write(lbl_v_sx), # v_sx rimosso
+            Create(p_dx), Create(rugosita), FadeIn(b_dx), GrowArrow(f_att), FadeIn(lbl_att)
+        )
+        self.wait(1)
+
+        # Animazione Parallela (rimosso animazione v_sx)
+        self.play(
+            b_sx.animate(rate_func=linear).shift(RIGHT * 4.5),
+            # v_sx.animate... rimosso
+            lbl_v_sx.animate(rate_func=linear).shift(RIGHT * 4.5),
+            b_dx.animate(rate_func=rate_functions.ease_out_cubic).shift(RIGHT * 3.5),
+            f_att.animate(rate_func=rate_functions.ease_out_cubic).shift(RIGHT * 3.5),
+            lbl_att.animate(rate_func=rate_functions.ease_out_cubic).shift(RIGHT * 3.5),
+            run_time=5
+        )
+
+        txt_sx = Text("Moto infinito\n(Inerzia)", font_size=24, color=GREEN).next_to(b_sx, DOWN, buff=0.3).shift(LEFT * 0.5)
+        txt_dx = Text("Si ferma\n(Dissipazione)", font_size=24, color=RED).next_to(b_dx, DOWN, buff=0.3)
+
+        self.play(FadeIn(txt_sx), FadeIn(txt_dx))
+        self.wait(3)
+        self.play(FadeOut(Group(*self.mobjects)))
+
+    # -----------------------------------------------------------------
+    # PARTE 5: CONCLUSIONE
+    # -----------------------------------------------------------------
+    def parte_5_definizione_finale(self):
+        cornice = Rectangle(width=10, height=3, color=BLUE, stroke_width=4)
+        testo_def = MarkupText(
+            f'La <b><span fgcolor="{self.c_attrito.to_hex()}">FORZA DI ATTRITO</span></b> è una forza che si\n'
+            f'<b>oppone</b> sempre al movimento relativo\n'
+            f'tra due superfici a contatto.',
+            font_size=32, line_spacing=1.5,
+        )
+        self.play(Create(cornice), Write(testo_def), run_time=3)
+        self.wait(3)
