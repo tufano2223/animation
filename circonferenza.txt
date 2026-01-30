@@ -1,0 +1,367 @@
+%%manim -qm -v WARNING VideoCompletoCirconferenza
+
+from manim import *
+import numpy as np
+
+class VideoCompletoCirconferenza(MovingCameraScene):
+    def construct(self):
+        # --- SEQUENZA DELLE SCENE ---
+        
+        # 1. Intro
+        self.parte_1_intro()
+        self.pulizia_totale()
+
+        # 2. Piano Cartesiano e Disegno
+        # Definisce self.piano, self.cerchio, self.centro, ecc.
+        self.parte_2_disegno()
+        
+        # NOTA: Qui ho rimosso la pulizia_totale()!
+        # La scena 3 lavorerà direttamente sugli oggetti lasciati dalla 2.
+
+        # 3. Zoom e Variabili
+        self.parte_3_variabili()
+        self.pulizia_totale() # Qui puliamo per preparare la scena 4 che è distinta
+
+        # 4. Dall'immagine all'Equazione
+        self.parte_4_eq_standard()
+        self.pulizia_totale()
+
+        # 5. Sviluppo Algebrico
+        self.parte_5_algebra()
+        self.pulizia_totale()
+
+        # 6. Rette Esterne/Tangenti/Secanti
+        self.parte_6_rette()
+        self.pulizia_totale()
+
+        # 7. Titolo Finale
+        self.parte_7_titolo_finale()
+
+    def pulizia_totale(self):
+        """Funzione ausiliaria per pulire scena e resettare camera"""
+        self.clear()
+        self.camera.frame.to_default_state_keys = {}
+        self.camera.frame.move_to(ORIGIN).set(width=config.frame_width)
+
+    # ---------------------------------------------------------
+    # PARTE 1: INTRO
+    # ---------------------------------------------------------
+    def parte_1_intro(self):
+        self.camera.background_color = BLACK
+        titolo = Text("CIRCONFERENZA", font_size=90, color=WHITE)
+        titolo.move_to(ORIGIN)
+        self.play(FadeIn(titolo), run_time=1)
+        self.wait(1)
+        self.play(FadeOut(titolo), run_time=0.5)
+        self.wait(0.5)
+
+    # ---------------------------------------------------------
+    # PARTE 2: DISEGNO GEOMETRICO
+    # ---------------------------------------------------------
+    def parte_2_disegno(self):
+        # Usiamo self.piano per poterlo riutilizzare nella parte 3
+        self.piano = NumberPlane(
+            x_range=[-7, 7, 1],
+            y_range=[-4, 4, 1],
+            background_line_style={"stroke_color": GREY, "stroke_width": 1, "stroke_opacity": 0.5},
+            axis_config={"color": WHITE}
+        ).shift(DOWN * 0.5)
+
+        # Coordinate
+        self.coords_C = self.piano.c2p(0, 0)
+        self.raggio_val = 3.0  # UNIFICATO: Raggio 3.0 come nella parte 3
+        
+        self.centro = Dot(self.coords_C, color=BLUE, radius=0.12)
+        # Salviamo la label per trasformarla dopo
+        self.label_c_text = MathTex("C(a; b)", font_size=30).next_to(self.centro, UP + LEFT, buff=0.1)
+
+        self.play(Create(self.piano), FadeIn(self.centro), Write(self.label_c_text), run_time=1.5)
+
+        # Punto P iniziale
+        p_start_coords = self.piano.c2p(self.raggio_val, 0)
+        self.punto_p = Dot(p_start_coords, color=BLUE_B)
+        self.segmento_cp = Line(self.coords_C, p_start_coords, color=RED, stroke_width=4)
+
+        self.play(FadeIn(self.punto_p), Create(self.segmento_cp), run_time=1)
+
+        self.cerchio = Circle(radius=self.raggio_val, color=YELLOW, stroke_width=4).move_to(self.coords_C)
+        self.gruppo_rotante = VGroup(self.segmento_cp, self.punto_p)
+
+        # Rotazione completa
+        self.play(
+            Rotate(self.gruppo_rotante, angle=2*PI, about_point=self.coords_C),
+            Create(self.cerchio),
+            run_time=2.5, 
+            rate_func=linear
+        )
+
+        # Posizionamento finale per transizione (angolo -35 gradi come in parte 3)
+        angle_target = -35 * DEGREES
+        self.play(
+            Rotate(self.gruppo_rotante, angle=angle_target, about_point=self.coords_C),
+            run_time=0.8,
+            rate_func=smooth 
+        )
+
+        self.label_p_text = Text("P", font_size=24).next_to(self.punto_p, DR, buff=0.1) 
+        self.play(Write(self.label_p_text), run_time=0.5)
+        self.wait(0.2)
+
+    # ---------------------------------------------------------
+    # PARTE 3: VARIABILI (ZOOM) - FLUIDA
+    # ---------------------------------------------------------
+    def parte_3_variabili(self):
+        COL_RAGGIO = RED
+        COL_PROIEZIONI = BLUE
+        
+        # 1. Recuperiamo le coordinate attuali degli oggetti esistenti
+        # Non ricreiamo il piano o il cerchio, usiamo self.piano e self.cerchio
+        
+        pos_C = self.centro.get_center()
+        pos_P = self.punto_p.get_center()
+        pos_H = np.array([pos_P[0], pos_C[1], 0]) # Proiezione sull'orizzontale
+
+        # 2. Nuove Label (Lettere Greche)
+        # Trasformiamo C(a;b) -> C(\alpha, \beta)
+        nuova_label_C = MathTex(r"C(a, b)", font_size=36).next_to(self.centro, UL, buff=0.2)
+        nuova_label_P = MathTex("P", font_size=36).next_to(self.punto_p, DR, buff=0.15)
+        
+        # Trasformazione fluida delle etichette
+        self.play(
+            ReplacementTransform(self.label_c_text, nuova_label_C),
+            ReplacementTransform(self.label_p_text, nuova_label_P),
+            run_time=1
+        )
+
+        # 3. Calcolo del punto di focus per lo zoom
+        centro_focus = (pos_C + pos_P + pos_H) / 3 + RIGHT * 0.5 + DOWN * 0.3
+        
+        self.play(
+            self.camera.frame.animate.set(width=self.cerchio.width * 1.3).move_to(centro_focus),
+            run_time=2.0
+        )
+
+        # 4. Creazione Proiezioni (Triangolo)
+        proiez_orizz = DashedLine(start=pos_C, end=pos_H, color=COL_PROIEZIONI, stroke_width=4)
+        proiez_vert = DashedLine(start=pos_H, end=pos_P, color=COL_PROIEZIONI, stroke_width=4)
+        
+        self.play(Create(proiez_orizz), Create(proiez_vert), run_time=1.5)
+
+        # 5. Etichette Cateti e Raggio
+        label_raggio = MathTex("r", color=COL_RAGGIO, font_size=42).next_to(self.segmento_cp.get_center(), UR, buff=0.1)
+        
+        label_cateto_x = MathTex("(x - \\alpha)", color=COL_PROIEZIONI, font_size=34).next_to(proiez_orizz, UP, buff=0.2)
+        # Sfondo nero per leggibilità sulle righe del piano
+        label_cateto_x.add_background_rectangle(color=BLACK, opacity=0.6, buff=0.05)
+        
+        label_cateto_y = MathTex("(y - \\beta)", color=COL_PROIEZIONI, font_size=34).next_to(proiez_vert, RIGHT, buff=0.2)
+        label_cateto_y.add_background_rectangle(color=BLACK, opacity=0.6, buff=0.05)
+
+        self.play(Write(label_raggio), Write(label_cateto_x), Write(label_cateto_y), run_time=2.0)
+        self.wait(2.0)
+
+    # ---------------------------------------------------------
+    # PARTE 4: EQUAZIONE STANDARD
+    # ---------------------------------------------------------
+    def parte_4_eq_standard(self):
+        # Qui manteniamo la logica originale di ricostruzione per sicurezza,
+        # dato che la pulizia avviene PRIMA di questa funzione.
+        COL_CERCHIO = YELLOW
+        COL_RAGGIO = RED
+        COL_PROIEZIONI = BLUE
+        COL_PUNTI = "#00FFFF"
+        
+        piano = NumberPlane(
+            x_range=[-7, 7, 1],
+            y_range=[-4, 4, 1],
+            background_line_style={"stroke_color": GREY, "stroke_width": 1, "stroke_opacity": 0.5},
+            axis_config={"color": WHITE}
+        ).shift(DOWN * 0.5)
+        self.add(piano)
+
+        pos_C = piano.c2p(0, 0) 
+        raggio_val = 3.0
+        angle_deg = -35 
+        angolo_P = angle_deg * DEGREES
+        pos_P = pos_C + np.array([np.cos(angolo_P), np.sin(angolo_P), 0]) * raggio_val
+        pos_H = np.array([pos_P[0], pos_C[1], 0])
+
+        cerchio = Circle(radius=raggio_val, color=COL_CERCHIO, stroke_width=4).move_to(pos_C)
+        dot_C = Dot(pos_C, color=COL_PUNTI, radius=0.1)
+        dot_P = Dot(pos_P, color=COL_PUNTI, radius=0.1)
+        label_C = MathTex(r"C(a, b)", font_size=36).next_to(dot_C, UL, buff=0.2)
+        label_P = MathTex("P", font_size=36).next_to(dot_P, DR, buff=0.15)
+        
+        linea_raggio = Line(pos_C, pos_P, color=COL_RAGGIO, stroke_width=4)
+        proiez_orizz = DashedLine(start=pos_C, end=pos_H, color=COL_PROIEZIONI, stroke_width=4)
+        proiez_vert = DashedLine(start=pos_H, end=pos_P, color=COL_PROIEZIONI, stroke_width=4)
+        
+        label_raggio = MathTex("r", color=COL_RAGGIO, font_size=42).next_to(linea_raggio.get_center(), UR, buff=0.1)
+        label_cateto_x = MathTex("(x - \\alpha)", color=COL_PROIEZIONI, font_size=34).next_to(proiez_orizz, UP, buff=0.2)
+        label_cateto_x.add_background_rectangle(color=BLACK, opacity=1.0, buff=0.05)
+        label_cateto_y = MathTex("(y - \\beta)", color=COL_PROIEZIONI, font_size=34).next_to(proiez_vert, RIGHT, buff=0.2)
+        label_cateto_y.add_background_rectangle(color=BLACK, opacity=1.0, buff=0.05)
+        
+        triangolo_group = VGroup(proiez_orizz, proiez_vert, label_cateto_x, label_cateto_y, label_raggio, linea_raggio)
+        scena_base = VGroup(cerchio, dot_C, dot_P, label_C, label_P, triangolo_group)
+        self.add(scena_base)
+
+        # Ripristiniamo lo zoom dove lo avevamo lasciato alla fine della parte 3
+        centro_focus = (pos_C + pos_P + pos_H) / 3 + RIGHT * 0.5 + DOWN * 0.3
+        self.camera.frame.set(width=cerchio.width * 1.3).move_to(centro_focus)
+
+        eq_standard = MathTex("(x - \\alpha)^2", "+", "(y - \\beta)^2", "=", "r^2")
+        eq_standard.set_color(WHITE).to_edge(UP, buff=1.0).add_background_rectangle(color=BLACK, opacity=0.8, buff=0.1)
+
+        self.play(
+            self.camera.frame.animate.move_to(ORIGIN).set(width=config.frame_width),
+            Write(eq_standard),
+            run_time=3.0
+        )
+        FadeOut(triangolo_group),
+        self.wait(2.0)
+
+    # ---------------------------------------------------------
+    # PARTE 5: SVILUPPO ALGEBRICO (Invariata)
+    # ---------------------------------------------------------
+    def parte_5_algebra(self):
+        COL_PARAM_A = TEAL
+        COL_PARAM_B = YELLOW
+        COL_PARAM_C = ORANGE
+
+        eq_standard = MathTex("(x - \\alpha)^2", "+", "(y - \\beta)^2", "=", "r^2")
+        eq_standard.scale(1.1)
+        eq_standard.set_color_by_tex("\\alpha", COL_PARAM_A)
+        eq_standard.set_color_by_tex("\\beta", COL_PARAM_B)
+
+        eq_espansa = MathTex("x^2", "- 2\\alpha x", "+ \\alpha^2", "+", "y^2", "- 2\\beta y", "+ \\beta^2", "=", "r^2")
+        eq_espansa.scale(1.1).set_color_by_tex("\\alpha", COL_PARAM_A).set_color_by_tex("\\beta", COL_PARAM_B).set_color_by_tex("x^2", COL_PARAM_A).set_color_by_tex("y^2", COL_PARAM_B)
+
+        eq_ordinata = MathTex("x^2", "+", "y^2", "- 2\\alpha x", "- 2\\beta y", "+", "(\\alpha^2 + \\beta^2 - r^2)", "=", "0")
+        eq_ordinata.scale(1.1)
+        eq_ordinata.set_color_by_tex("\\alpha", COL_PARAM_A)
+        eq_ordinata.set_color_by_tex("\\beta", COL_PARAM_B)
+        eq_ordinata.set_color_by_tex("(\\alpha^2 + \\beta^2 - r^2)", COL_PARAM_C)
+        eq_ordinata.set_color_by_tex("x^2", COL_PARAM_A).set_color_by_tex("y^2", COL_PARAM_B)
+        
+        eq_generale = MathTex("x^2", "+", "y^2", "+", "a", "x", "+", "b", "y", "+", "c", "=", "0")
+        eq_generale.scale(1.3)
+        eq_generale.set_color_by_tex("a", COL_PARAM_A)
+        eq_generale.set_color_by_tex("b", COL_PARAM_B)
+        eq_generale.set_color_by_tex("c", COL_PARAM_C)
+        eq_generale.set_color_by_tex("x^2", COL_PARAM_A).set_color_by_tex("y^2", COL_PARAM_B)
+
+        self.play(Write(eq_standard))
+        self.wait(1)
+        self.play(TransformMatchingTex(eq_standard, eq_espansa), run_time=2)
+        self.wait(1)
+        self.play(TransformMatchingTex(eq_espansa, eq_ordinata), run_time=2)
+        self.wait(1)
+
+        legenda = VGroup(
+            MathTex("-2\\alpha \\rightarrow a", color=COL_PARAM_A),
+            MathTex("-2\\beta \\rightarrow b", color=COL_PARAM_B),
+            MathTex("(\\alpha^2 + \\beta^2 - r^2) \\rightarrow c", color=COL_PARAM_C)
+        ).arrange(DOWN, aligned_edge=LEFT).to_edge(UP).scale(0.8)
+
+        self.play(FadeIn(legenda))
+        self.wait(1.5)
+        self.play(TransformMatchingTex(eq_ordinata, eq_generale), run_time=2)
+        self.wait(1)
+
+        box = SurroundingRectangle(eq_generale, color=WHITE, buff=0.2)
+        self.play(Create(box), FadeOut(legenda))
+        self.wait(3)
+
+    # ---------------------------------------------------------
+    # PARTE 6: POSIZIONI RECIPROCHE (Invariata)
+    # ---------------------------------------------------------
+    def parte_6_rette(self):
+        COL_CERCHIO = YELLOW
+        COL_CENTRO = BLUE
+        COL_RETTA = ORANGE
+        COL_PUNTO_P = RED
+        COL_PARAM_A = RED
+        COL_PARAM_B = YELLOW
+        RAGGIO_VAL = 2.5
+        ANGLE_DEG = 30
+        
+        VEC_CENTRO = DOWN * ORIGIN 
+        ANGLE_RAD = ANGLE_DEG * DEGREES
+        OFFSET_TANGENZA = RAGGIO_VAL / np.cos(ANGLE_RAD)
+        
+        POS_EXT = VEC_CENTRO + UP * (OFFSET_TANGENZA + 1.0)
+        POS_TAN = VEC_CENTRO + UP * OFFSET_TANGENZA
+        POS_SEC = VEC_CENTRO + UP * 0.5
+        POS_TESTO = RIGHT * 4.0
+
+        piano = NumberPlane(
+            x_range=[-10, 10, 1], y_range=[-10, 10, 1],
+            background_line_style={"stroke_color": GREY, "stroke_width": 1, "stroke_opacity": 0.4},
+            axis_config={"stroke_color": WHITE, "stroke_width": 2, "include_numbers": False}
+        )
+        self.add(piano)
+        
+        cerchio = Circle(radius=RAGGIO_VAL, color=COL_CERCHIO, stroke_width=4).set_fill(opacity=0).move_to(VEC_CENTRO)
+        punto_centro = Dot(point=VEC_CENTRO, color=COL_CENTRO, radius=0.08)
+        lbl_centro = MathTex("C", color=COL_CENTRO, font_size=35).next_to(punto_centro, DOWN)
+
+        self.add(cerchio, punto_centro, lbl_centro)
+
+        retta = Line(LEFT*3, RIGHT*3, color=COL_RETTA, stroke_width=6).rotate(ANGLE_RAD)
+        txt_ext = Tex(r"Esterna\\$\Delta < 0$", color=COL_RETTA).move_to(POS_TESTO)
+        txt_tan = Tex(r"Tangente\\$\Delta = 0$", color=COL_RETTA).move_to(POS_TESTO)
+        txt_sec = Tex(r"Secante\\$\Delta > 0$", color=COL_RETTA).move_to(POS_TESTO)
+
+        # 1. Esterna
+        retta.move_to(POS_EXT)
+        self.play(FadeIn(retta), Write(txt_ext), run_time=1.5)
+        self.wait(1.5)
+        self.play(FadeOut(retta), FadeOut(txt_ext), run_time=0.5)
+
+        # 2. Tangente
+        angle_normal = ANGLE_RAD + PI/2
+        vec_p = VEC_CENTRO + RAGGIO_VAL * np.array([np.cos(angle_normal), np.sin(angle_normal), 0])
+        dot_p = Dot(vec_p, color=COL_PUNTO_P, radius=0.08)
+        lbl_p = MathTex("P", color=COL_PUNTO_P, font_size=40).next_to(dot_p, UP+LEFT, buff=0.1)
+        
+        retta.move_to(POS_TAN)
+        self.play(FadeIn(retta), Write(txt_tan), FadeIn(dot_p), FadeIn(lbl_p), run_time=1.0)
+        self.wait(1.5)
+        self.play(FadeOut(retta), FadeOut(txt_tan), FadeOut(dot_p), FadeOut(lbl_p), run_time=0.5)
+
+        # 3. Secante
+        unit_dir = np.array([np.cos(ANGLE_RAD), np.sin(ANGLE_RAD), 0])
+        vec_delta = POS_SEC - VEC_CENTRO
+        a_eq = 1
+        b_eq = 2 * np.dot(vec_delta, unit_dir)
+        c_eq = np.linalg.norm(vec_delta)**2 - RAGGIO_VAL**2
+        delta_geom = b_eq**2 - 4*a_eq*c_eq
+        t1 = (-b_eq - np.sqrt(delta_geom)) / 2
+        t2 = (-b_eq + np.sqrt(delta_geom)) / 2
+        pt_A = POS_SEC + t1 * unit_dir
+        pt_B = POS_SEC + t2 * unit_dir
+        
+        dot_a = Dot(pt_A, color=COL_PARAM_A, radius=0.08)
+        lbl_a = MathTex("A", color=COL_PARAM_A, font_size=40).move_to(pt_A + LEFT*0.4 + UP*0.2)
+        dot_b = Dot(pt_B, color=COL_PARAM_A, radius=0.08)
+        lbl_b = MathTex("B", color=COL_PARAM_A, font_size=40).move_to(pt_B + RIGHT*0.4 + DOWN*0.2)
+
+        retta.move_to(POS_SEC)
+        self.play(FadeIn(retta), Write(txt_sec), FadeIn(dot_a), FadeIn(lbl_a), FadeIn(dot_b), FadeIn(lbl_b), run_time=1.0)
+        self.wait(1.0)
+        
+        self.play(
+            FadeOut(cerchio), FadeOut(punto_centro), FadeOut(lbl_centro),
+            FadeOut(retta), FadeOut(txt_sec), FadeOut(dot_a), FadeOut(lbl_a),
+            FadeOut(dot_b), FadeOut(lbl_b), FadeOut(piano), run_time=1.0
+        )
+
+    # ---------------------------------------------------------
+    # PARTE 7: TITOLO FINALE
+    # ---------------------------------------------------------
+    def parte_7_titolo_finale(self):
+        titolo = Text("SPIEGAZIONE BASE DELLA CIRCONFERENZA", font_size=48, color=WHITE)
+        titolo.move_to(ORIGIN)
+        self.play(Write(titolo), run_time=1.5)
+        self.wait(3)
