@@ -1,0 +1,236 @@
+%%manim -qm -v WARNING QuadratoDelTrinomioLightGreenAC
+
+from manim import *
+
+class QuadratoDelTrinomioLightGreenAC(Scene):
+    def construct(self):
+        # ==========================================
+        # 1. CONFIGURAZIONE E COLORI
+        # ==========================================
+        self.camera.background_color = BLACK
+        
+        # Colori HEX
+        COL_A = "#C55FBB"        # Magenta (a^2)
+        COL_B = "#83C167"        # Verde Medio (b^2)
+        COL_C = "#58C4DD"        # Azzurro (c^2)
+        
+        COL_AB = "#E91E63"       # Rosa Scuro (ab)
+        
+        # --- MODIFICA COLORE QUI ---
+        COL_AC = "#8AFB85"       # Verde Chiaro brillante (ac)
+        # ---------------------------
+        
+        COL_BC = "#5CD0B3"       # Celeste/Teal (bc)
+
+        # Dimensioni
+        UNIT = 0.85  
+        LEN_A = 3.0 * UNIT
+        LEN_B = 2.0 * UNIT
+        LEN_C = 1.0 * UNIT
+        STROKE_W = 3
+        
+        # --- POSIZIONAMENTO ---
+        # Griglia in basso a sinistra
+        grid_origin = DOWN * 3.2 + LEFT * 2.0
+
+        # ==========================================
+        # SCENA 1: Setup e Diagonale
+        # ==========================================
+
+        # Formula Iniziale
+        titolo_iniziale = Text("Quadrato di un trinomio", font_size=48, color=WHITE)
+        self.play(Write(titolo_iniziale))
+        self.wait(1.5)
+        self.play(FadeOut(titolo_iniziale))
+        self.wait(0.5)
+
+        start_eq = MathTex("(a + b + c)^2", font_size=60).to_edge(LEFT, buff=1).shift(UP*1.0)
+        start_eq[0][1].set_color(COL_A)
+        start_eq[0][3].set_color(COL_B)
+        start_eq[0][5].set_color(COL_C)
+        start_eq[0][7].set_color(WHITE)
+        
+        self.play(Write(start_eq))
+        self.wait(0.5)
+
+        # Etichette sugli Assi
+        pos_x_a = grid_origin + RIGHT * (LEN_A / 2) + DOWN * 0.5
+        pos_x_b = grid_origin + RIGHT * (LEN_A + LEN_B / 2) + DOWN * 0.5
+        pos_x_c = grid_origin + RIGHT * (LEN_A + LEN_B + LEN_C / 2) + DOWN * 0.5
+        
+        lbl_x_a = MathTex("a", color=COL_A).move_to(pos_x_a)
+        lbl_x_b = MathTex("b", color=COL_B).move_to(pos_x_b)
+        lbl_x_c = MathTex("c", color=COL_C).move_to(pos_x_c)
+
+        pos_y_a = grid_origin + UP * (LEN_A / 2) + LEFT * 0.5
+        pos_y_b = grid_origin + UP * (LEN_A + LEN_B / 2) + LEFT * 0.5
+        pos_y_c = grid_origin + UP * (LEN_A + LEN_B + LEN_C / 2) + LEFT * 0.5
+
+        lbl_y_a = MathTex("a", color=COL_A).move_to(pos_y_a)
+        lbl_y_b = MathTex("b", color=COL_B).move_to(pos_y_b)
+        lbl_y_c = MathTex("c", color=COL_C).move_to(pos_y_c)
+
+        # Animazione: Copie delle lettere vanno sugli assi
+        self.play(
+            TransformFromCopy(start_eq[0][1], lbl_x_a),
+            TransformFromCopy(start_eq[0][3], lbl_x_b),
+            TransformFromCopy(start_eq[0][5], lbl_x_c),
+            TransformFromCopy(start_eq[0][1], lbl_y_a),
+            TransformFromCopy(start_eq[0][3], lbl_y_b),
+            TransformFromCopy(start_eq[0][5], lbl_y_c),
+            run_time=2
+        )
+
+        # Disegno Assi
+        l_xa = Line(grid_origin, grid_origin + RIGHT*LEN_A, color=COL_A, stroke_width=STROKE_W)
+        l_xb = Line(l_xa.get_end(), l_xa.get_end() + RIGHT*LEN_B, color=COL_B, stroke_width=STROKE_W)
+        l_xc = Line(l_xb.get_end(), l_xb.get_end() + RIGHT*LEN_C, color=COL_C, stroke_width=STROKE_W)
+        
+        l_ya = Line(grid_origin, grid_origin + UP*LEN_A, color=COL_A, stroke_width=STROKE_W)
+        l_yb = Line(l_ya.get_end(), l_ya.get_end() + UP*LEN_B, color=COL_B, stroke_width=STROKE_W)
+        l_yc = Line(l_yb.get_end(), l_yb.get_end() + UP*LEN_C, color=COL_C, stroke_width=STROKE_W)
+
+        self.play(Create(VGroup(l_xa, l_xb, l_xc, l_ya, l_yb, l_yc)), run_time=1.5)
+
+        # Diagonale Principale (Quadrati)
+        sq_a = Rectangle(width=LEN_A, height=LEN_A, color=COL_A, fill_opacity=0.6, stroke_width=1)
+        sq_a.align_to(grid_origin, DL)
+        txt_a = MathTex("a^2").move_to(sq_a)
+        
+        sq_b = Rectangle(width=LEN_B, height=LEN_B, color=COL_B, fill_opacity=0.6, stroke_width=1)
+        sq_b.align_to(sq_a.get_corner(UR), DL)
+        txt_b = MathTex("b^2").move_to(sq_b)
+
+        sq_c = Rectangle(width=LEN_C, height=LEN_C, color=COL_C, fill_opacity=0.6, stroke_width=1)
+        sq_c.align_to(sq_b.get_corner(UR), DL)
+        txt_c = MathTex("c^2").scale(0.8).move_to(sq_c)
+
+        self.play(FadeIn(sq_a), Write(txt_a))
+        self.play(FadeIn(sq_b), Write(txt_b))
+        self.play(FadeIn(sq_c), Write(txt_c))
+        self.wait(1)
+
+        # ==========================================
+        # SCENA 2: Battaglia Navale
+        # ==========================================
+        
+        def do_battle(rect, label_tex, start_x, start_y):
+            line_v = Line(start_x, [start_x[0], rect.get_center()[1], 0], color=rect.get_color(), stroke_width=2)
+            line_h = Line(start_y, [rect.get_center()[0], start_y[1], 0], color=rect.get_color(), stroke_width=2)
+            
+            self.play(Create(line_v), Create(line_h), run_time=0.4)
+            self.play(
+                line_v.animate.put_start_and_end_on(
+                    [start_x[0], rect.get_bottom()[1], 0], 
+                    [start_x[0], rect.get_top()[1], 0]
+                ).move_to(rect.get_center()),
+                
+                line_h.animate.put_start_and_end_on(
+                    [rect.get_left()[0], start_y[1], 0], 
+                    [rect.get_right()[0], start_y[1], 0]
+                ).move_to(rect.get_center()),
+                run_time=0.6
+            )
+            self.play(FadeIn(rect), Write(label_tex), FadeOut(line_v), FadeOut(line_h), run_time=0.4)
+
+        # GRUPPO AB (ROSA SCURO)
+        pt_x_b = l_xb.get_center(); pt_y_a = l_ya.get_center()
+        r_ab1 = Rectangle(width=LEN_B, height=LEN_A, color=COL_AB, fill_opacity=0.6, stroke_width=1).next_to(sq_a, RIGHT, buff=0)
+        t_ab1 = MathTex("ab").move_to(r_ab1)
+        t_ab1[0][0].set_color(COL_A); t_ab1[0][1].set_color(COL_B)
+        do_battle(r_ab1, t_ab1, pt_x_b, pt_y_a)
+
+        pt_x_a = l_xa.get_center(); pt_y_b = l_yb.get_center()
+        r_ab2 = Rectangle(width=LEN_A, height=LEN_B, color=COL_AB, fill_opacity=0.6, stroke_width=1).next_to(sq_a, UP, buff=0)
+        t_ab2 = MathTex("ab").move_to(r_ab2)
+        t_ab2[0][0].set_color(COL_A); t_ab2[0][1].set_color(COL_B)
+        do_battle(r_ab2, t_ab2, pt_x_a, pt_y_b)
+
+        # GRUPPO AC (ORA VERDE CHIARO)
+        pt_x_c = l_xc.get_center()
+        r_ac1 = Rectangle(width=LEN_C, height=LEN_A, color=COL_AC, fill_opacity=0.6, stroke_width=1).next_to(r_ab1, RIGHT, buff=0)
+        t_ac1 = MathTex("ac").move_to(r_ac1)
+        t_ac1[0][0].set_color(COL_A); t_ac1[0][1].set_color(COL_C)
+        do_battle(r_ac1, t_ac1, pt_x_c, pt_y_a)
+
+        pt_y_c = l_yc.get_center()
+        r_ac2 = Rectangle(width=LEN_A, height=LEN_C, color=COL_AC, fill_opacity=0.6, stroke_width=1)
+        r_ac2.align_to(sq_a, LEFT).align_to(l_yc, DOWN)
+        t_ac2 = MathTex("ac").move_to(r_ac2)
+        t_ac2[0][0].set_color(COL_A); t_ac2[0][1].set_color(COL_C)
+        do_battle(r_ac2, t_ac2, pt_x_a, pt_y_c)
+
+        # GRUPPO BC (CELESTE)
+        r_bc1 = Rectangle(width=LEN_C, height=LEN_B, color=COL_BC, fill_opacity=0.6, stroke_width=1).next_to(sq_b, RIGHT, buff=0)
+        t_bc1 = MathTex("bc").scale(0.9).move_to(r_bc1)
+        t_bc1[0][0].set_color(COL_B); t_bc1[0][1].set_color(COL_C)
+        do_battle(r_bc1, t_bc1, pt_x_c, pt_y_b)
+
+        r_bc2 = Rectangle(width=LEN_B, height=LEN_C, color=COL_BC, fill_opacity=0.6, stroke_width=1).next_to(sq_b, UP, buff=0)
+        t_bc2 = MathTex("bc").scale(0.9).move_to(r_bc2)
+        t_bc2[0][0].set_color(COL_B); t_bc2[0][1].set_color(COL_C)
+        do_battle(r_bc2, t_bc2, pt_x_b, pt_y_c)
+
+        self.wait(1)
+
+        # ==========================================
+        # SCENA 3: Estrazione Algebrica (COPIA)
+        # ==========================================
+
+        # TITOLO IN ALTO
+        final_title = MathTex("(a + b + c)^2", "=", font_size=50)
+        final_title[0][1].set_color(COL_A)
+        final_title[0][3].set_color(COL_B)
+        final_title[0][5].set_color(COL_C)
+        final_title.to_corner(UL, buff=1.0) 
+
+        self.play(
+            ReplacementTransform(start_eq, final_title[0]),
+            Write(final_title[1]),
+            run_time=1.5
+        )
+
+        # Termini Target
+        term_a2 = MathTex("a^2", color=COL_A, font_size=50)
+        term_b2 = MathTex("+b^2", font_size=50); term_b2[0][1].set_color(COL_B)
+        term_c2 = MathTex("+c^2", font_size=50); term_c2[0][1].set_color(COL_C)
+        
+        term_2ab = MathTex("+2ab", font_size=50)
+        term_2ab[0][2].set_color(COL_A); term_2ab[0][3].set_color(COL_B)
+        
+        term_2ac = MathTex("+2ac", font_size=50)
+        term_2ac[0][2].set_color(COL_A); term_2ac[0][3].set_color(COL_C)
+        
+        term_2bc = MathTex("+2bc", font_size=50)
+        term_2bc[0][2].set_color(COL_B); term_2bc[0][3].set_color(COL_C)
+
+        equation_terms = VGroup(term_a2, term_b2, term_c2, term_2ab, term_2ac, term_2bc)
+        equation_terms.arrange(RIGHT, buff=0.2)
+        equation_terms.next_to(final_title, RIGHT, buff=0.2)
+
+        if equation_terms.get_right()[0] > config.frame_x_radius:
+            equation_terms.scale_to_fit_width(config.frame_width - final_title.width - 1.5)
+            equation_terms.next_to(final_title, RIGHT, buff=0.2)
+
+        # --- ANIMAZIONE CON COPIE ---
+        self.play(
+            TransformFromCopy(txt_a, term_a2),
+            TransformFromCopy(txt_b, term_b2),
+            TransformFromCopy(txt_c, term_c2),
+            run_time=1.5
+        )
+
+        self.play(
+            TransformFromCopy(VGroup(t_ab1, t_ab2), term_2ab), 
+            run_time=1.2
+        )
+        self.play(
+            TransformFromCopy(VGroup(t_ac1, t_ac2), term_2ac), 
+            run_time=1.2
+        )
+        self.play(
+            TransformFromCopy(VGroup(t_bc1, t_bc2), term_2bc), 
+            run_time=1.2
+        )
+
+        self.wait(3)
