@@ -1,0 +1,500 @@
+%%manim -qm -v WARNING LezioneGeometriaCompleta
+
+from manim import *
+import numpy as np
+
+class LezioneGeometriaCompleta(Scene):
+    def construct(self):
+        # --- CONFIGURAZIONE GLOBALE ---
+        # Impostiamo un colore di sfondo unico per tutta la lezione per coerenza
+        self.camera.background_color = "#0B0C15" 
+        
+        # --- SEQUENZA SCENE ---
+        
+        # 1. Intro
+        self.scena_1_intro()
+        self.clear() # Assicura che lo schermo sia pulito tra le scene
+        
+        # 2. Perimetro Definizione
+        self.scena_2_perimetro_def()
+        self.clear()
+        
+        # 3. Perimetro Casi
+        self.scena_3_perimetro_casi()
+        self.clear()
+        
+        # 4. Area Concetto Generale
+        self.scena_4_area_concetto()
+        self.clear()
+        
+        # 4b. DIMOSTRAZIONE VISIVA (Nuova aggiunta)
+        self.scena_4b_dimostrazione_visiva()
+        self.clear()
+        
+        # 5. Area Casi Specifici
+        self.scena_5_area_casi()
+        self.clear()
+        
+        # 6. Erone
+        self.scena_6_erone()
+        self.clear()
+        
+        # 7. Esercizio Dati
+        self.scena_7_esercizio_dati()
+        self.clear()
+        
+        # 8. Calcolo Finale
+        self.scena_8_calcolo_finale()
+
+    # ==========================================
+    # 1. INTRODUZIONE
+    # ==========================================
+    def scena_1_intro(self):
+        COL_GLOW = "#00FFFF"
+        
+        def make_glowing(mobject, glow_color=COL_GLOW, opacity=0.4, stroke_width_mult=4):
+            glow = mobject.copy()
+            glow.set_stroke(color=glow_color, width=mobject.get_stroke_width() * stroke_width_mult, opacity=opacity)
+            glow.set_fill(opacity=0)
+            return VGroup(glow, mobject)
+
+        txt_titolo = Text("GEOMETRIA DEL TRIANGOLO", font="Sans-serif", font_size=52, weight=BOLD)
+        txt_titolo.set_color_by_gradient(WHITE, COL_GLOW)
+        txt_sub = Text("Analisi di Perimetro e Area: Formule e Applicazioni", font="Sans-serif", font_size=24, color=GRAY_B)
+        
+        gruppo_testo = VGroup(txt_titolo, txt_sub).arrange(DOWN, buff=0.4)
+        gruppo_testo.to_edge(UP, buff=1.0)
+
+        centro_geo = DOWN * 1.5
+        triangolo_poly = Polygon(
+            centro_geo + UP * 2.2, 
+            centro_geo + DOWN * 1.0 + RIGHT * 2.5, 
+            centro_geo + DOWN * 1.0 + LEFT * 2.5, 
+            color=COL_GLOW, stroke_width=4
+        )
+        triangolo_poly.set_fill(opacity=0)
+        triangolo_visual = make_glowing(triangolo_poly, opacity=0.5, stroke_width_mult=5)
+
+        self.play(FadeIn(gruppo_testo, shift=DOWN * 0.5), run_time=1.5)
+        self.wait(0.5)
+        self.play(Create(triangolo_poly, run_time=2), FadeIn(triangolo_visual[0], run_time=2))
+        self.play(triangolo_visual.animate.scale(1.05), rate_func=there_and_back, run_time=2)
+        self.wait(1)
+        self.play(FadeOut(gruppo_testo), FadeOut(triangolo_visual), run_time=1.0)
+
+    # ==========================================
+    # 2. DEFINIZIONE PERIMETRO
+    # ==========================================
+    def scena_2_perimetro_def(self):
+        C_TEXT = BLUE_A
+        C_LED_CORE = "#FFFFE0"
+        C_LED_GLOW = "#FFF200"
+        
+        title = Text("IL PERIMETRO (P)", font="sans-serif", weight=BOLD, color=C_TEXT, font_size=42)
+        subtitle = VGroup(
+            Text("La misura del contorno.", font="sans-serif", color=C_TEXT, font_size=24),
+            Text("È la somma delle lunghezze dei tre lati.", font="sans-serif", color=C_TEXT, font_size=24)
+        ).arrange(DOWN, aligned_edge=LEFT)
+        formula = MathTex(r"P = l_1 + l_2 + l_3", color=C_TEXT).scale(1.3)
+        
+        text_group = VGroup(title, subtitle, formula).arrange(DOWN, aligned_edge=LEFT, buff=0.4)
+        text_group.move_to(RIGHT * 3.5)
+
+        v_A, v_B, v_C = [-2.0, -1.5, 0], [2.0, -1.5, 0], [-0.5, 1.5, 0]
+        tri = Polygon(v_A, v_B, v_C, color=C_TEXT, stroke_width=4).scale(0.9).move_to(LEFT * 3.5)
+        
+        # Lati e label
+        vertices = tri.get_vertices()
+        paths = [Line(vertices[0], vertices[1]), Line(vertices[1], vertices[2]), Line(vertices[2], vertices[0])]
+        labels = [
+            MathTex("l_1", color=C_TEXT).next_to(paths[0], DOWN, buff=0.2),
+            MathTex("l_2", color=C_TEXT).next_to(paths[1], RIGHT, buff=0.1).shift(UP*0.2),
+            MathTex("l_3", color=C_TEXT).next_to(paths[2], LEFT, buff=0.1).shift(UP*0.2)
+        ]
+
+        self.play(FadeIn(text_group, shift=UP*0.5), DrawBorderThenFill(tri), run_time=1.5)
+        
+        for path, label in zip(paths, labels):
+            self.play(
+                ShowPassingFlash(path.copy().set_stroke(width=20, color=C_LED_GLOW, opacity=0.4), time_width=0.5, run_time=1.0),
+                ShowPassingFlash(path.copy().set_stroke(width=4, color=C_LED_CORE, opacity=1.0), time_width=0.5, run_time=1.0),
+                Write(label, run_time=0.5)
+            )
+        
+        self.wait(1.5)
+        self.play(FadeOut(text_group, shift=LEFT), FadeOut(tri, shift=LEFT), FadeOut(*labels, shift=LEFT), run_time=0.8)
+
+    # ==========================================
+    # 3. PERIMETRO: CASI SPECIFICI
+    # ==========================================
+    def scena_3_perimetro_casi(self):
+        COL_TESTO = WHITE
+        COL_FORME = "#00FFFF"
+        COL_ACCENTO = "#FF00FF"
+
+        titolo = Text("CASI SPECIFICI: PERIMETRO", font_size=40, color=COL_TESTO).to_corner(UL, buff=0.8)
+
+        # Isoscele
+        tri_iso = Polygon([-1.2, 0, 0], [1.2, 0, 0], [0, 2.2, 0], color=COL_FORME, stroke_width=4)
+        lbls_iso = VGroup(
+            MathTex("b", color=COL_TESTO).next_to(tri_iso, DOWN, buff=0.25),
+            MathTex("l", color=COL_TESTO).next_to(tri_iso.get_center() + LEFT*0.6 + UP*0.4, LEFT, buff=0.2),
+            MathTex("l", color=COL_TESTO).next_to(tri_iso.get_center() + RIGHT*0.6 + UP*0.4, RIGHT, buff=0.2)
+        )
+        grp_iso_geom = VGroup(tri_iso, lbls_iso).move_to(LEFT * 4.0 + UP * 0.9)
+        grp_iso_txt = VGroup(
+            Text("Triangolo Isoscele", font_size=32, color=COL_TESTO),
+            Text("(due lati uguali)", font_size=24, color=GREY_B),
+            MathTex("P = b + (2 \cdot l)", color=COL_ACCENTO, font_size=44)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.35).next_to(grp_iso_geom, RIGHT, buff=3.0).align_to(grp_iso_geom, UP)
+
+        # Equilatero
+        l_eq = 2.2
+        h_eq = l_eq * np.sqrt(3) / 2
+        tri_eq = Polygon([-l_eq/2, 0, 0], [l_eq/2, 0, 0], [0, h_eq, 0], color=COL_FORME, stroke_width=4)
+        lbls_eq = VGroup(
+            MathTex("l", color=COL_TESTO).next_to(tri_eq, DOWN, buff=0.25),
+            MathTex("l", color=COL_TESTO).next_to(tri_eq.get_center()+LEFT*0.5+UP*0.3, LEFT, buff=0.2),
+            MathTex("l", color=COL_TESTO).next_to(tri_eq.get_center()+RIGHT*0.5+UP*0.3, RIGHT, buff=0.2)
+        )
+        grp_eq_geom = VGroup(tri_eq, lbls_eq).move_to(LEFT * 4.0 + DOWN * 2.2)
+        grp_eq_txt = VGroup(
+            Text("Triangolo Equilatero", font_size=32, color=COL_TESTO),
+            Text("(tre lati uguali)", font_size=24, color=GREY_B),
+            MathTex("P = 3 \cdot l", color=COL_ACCENTO, font_size=44)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.35).align_to(grp_iso_txt, LEFT).align_to(grp_eq_geom, UP)
+
+        tutto = VGroup(titolo, grp_iso_geom, grp_iso_txt, grp_eq_geom, grp_eq_txt)
+        
+        self.play(FadeIn(tutto, shift=LEFT), run_time=1.2)
+        self.wait(0.5)
+        # Pulsazioni
+        self.play(Indicate(lbls_iso[1], color=COL_ACCENTO), Indicate(lbls_iso[2], color=COL_ACCENTO), run_time=0.8)
+        self.play(Indicate(lbls_eq, color=COL_ACCENTO), run_time=0.8)
+        self.wait(2.0)
+        self.play(FadeOut(tutto), run_time=1.0)
+
+    # ==========================================
+    # 4. CONCETTO DI AREA
+    # ==========================================
+    def scena_4_area_concetto(self):
+        COL_TESTO = WHITE
+        COL_FORME = "#00FFFF"
+        COL_ACCENTO = "#FF00FF"
+        C_FILL = "#00FFFF"
+
+        # Titoli
+        titolo = VGroup(
+            Text("L'AREA (A)", font_size=48, color=COL_TESTO),
+            Text("La misura della superficie interna", font_size=32, color=GREY_B)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.2).to_corner(UL, buff=1.0)
+
+        # Geometria
+        p1, p2, p3 = [-1.5, -2.0, 0], [3.5, -2.0, 0], [1.0, 1.5, 0]
+        tri_out = Polygon(p1, p2, p3, color=COL_FORME, stroke_width=4)
+        base_b = Line(p1, p2, color=COL_FORME, stroke_width=4)
+        lbl_b = MathTex("b", color=COL_TESTO, font_size=40).next_to(base_b, DOWN, buff=0.2)
+        h_line = DashedLine(start=p3, end=[p3[0], p1[1], 0], color=COL_ACCENTO, stroke_width=3)
+        lbl_h = MathTex("h", color=COL_ACCENTO, font_size=40).next_to(h_line, LEFT, buff=0.1)
+        filler = Polygon(p1, p2, p3, color=C_FILL, fill_opacity=0.4, stroke_width=0)
+        
+        geom_grp = VGroup(filler, tri_out, base_b, h_line, lbl_b, lbl_h).move_to(LEFT * 3.5 + DOWN * 0.5)
+
+        # Testi
+        txt_grp = VGroup(
+            Text("Formula Standard:", font_size=32, color=COL_TESTO),
+            MathTex("A = \\frac{(b \cdot h)}{2}", font_size=60, color=COL_ACCENTO),
+            Text("Perché diviso 2?", font_size=28, color=COL_FORME, weight=BOLD),
+            Paragraph("Ogni triangolo è esattamente", "la metà di un parallelogramma", 
+                      "con la stessa base e altezza.", font_size=24, color=GREY_B, line_spacing=1.3)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.6).move_to(RIGHT * 4.5)
+
+        self.play(FadeIn(titolo, shift=RIGHT), run_time=1.5)
+        self.play(Create(tri_out), run_time=1.0)
+        self.play(Indicate(base_b, color=COL_ACCENTO), Write(lbl_b), run_time=0.8)
+        self.play(Create(h_line), Write(lbl_h), run_time=0.8)
+        self.play(FadeIn(filler), run_time=1.0)
+        self.play(FadeIn(txt_grp, shift=LEFT), run_time=1.5)
+        self.wait(2.5)
+        self.play(FadeOut(titolo), FadeOut(geom_grp), FadeOut(txt_grp), run_time=1.0)
+
+    # ==========================================
+    # 4b. DIMOSTRAZIONE VISIVA (Dall'immagine)
+    # ==========================================
+    def scena_4b_dimostrazione_visiva(self):
+        COL_TRI = "#00FFFF"      # Ciano (Triangolo originale)
+        COL_COPY = "#AAAAAA"     # Grigio (Triangolo copia)
+        COL_ACCENT = "#FF9900"   # Arancione (per evidenziare base/formule)
+        TXT_COL = WHITE
+
+        # --- 1. SETUP INIZIALE ---
+        # Coordinate per un triangolo scaleno generico
+        pA, pB, pC = [-2, -1, 0], [2, -1, 0], [-0.5, 1.5, 0]
+        
+        tri_orig = Polygon(pA, pB, pC, color=COL_TRI, fill_opacity=0.5, stroke_width=4)
+        
+        # Linea dell'altezza (tratteggiata)
+        h_start = pC
+        h_end = [pC[0], pA[1], 0]
+        linea_h = DashedLine(h_start, h_end, color=WHITE)
+        label_h = MathTex("h", color=WHITE).next_to(linea_h, LEFT, buff=0.1)
+        
+        # Linea della base (evidenziata)
+        linea_b = Line(pA, pB, color=COL_ACCENT, stroke_width=6)
+        label_b = MathTex("b", color=COL_ACCENT).next_to(linea_b, DOWN, buff=0.2)
+
+        # Testo Pannello 1
+        txt_def = VGroup(
+            Text("L'Altezza è la distanza perpendicolare", font_size=24, color=TXT_COL),
+            Text("tra la base e il vertice opposto.", font_size=24, color=TXT_COL)
+        ).arrange(DOWN).to_edge(UP, buff=1.0)
+
+        self.play(FadeIn(txt_def), DrawBorderThenFill(tri_orig))
+        self.play(Create(linea_h), Write(label_h))
+        self.play(Create(linea_b), Write(label_b))
+        self.wait(1.5)
+
+        # --- 2. IL PROBLEMA (A = ?) ---
+        txt_domanda = MathTex("A = ?", font_size=60, color=COL_TRI).move_to(RIGHT * 3 + UP * 1)
+        self.play(Write(txt_domanda))
+        self.wait(1)
+        self.play(FadeOut(txt_def), FadeOut(txt_domanda))
+
+        # --- 3. TRASFORMAZIONE IN PARALLELOGRAMMA ---
+        # Creiamo una copia
+        tri_copy = tri_orig.copy().set_color(COL_COPY).set_fill(opacity=0.3)
+        
+        # Calcoliamo il punto medio del lato destro per la rotazione
+        punto_medio = (np.array(pB) + np.array(pC)) / 2
+
+        self.play(FadeIn(tri_copy))
+        self.wait(0.5)
+
+        # Animazione chiave: Rotazione attorno al punto medio per formare il parallelogramma
+        self.play(
+            Rotate(tri_copy, angle=PI, about_point=punto_medio),
+            run_time=2.0,
+            path_arc=PI/2
+        )
+        
+        # Gruppo Parallelogramma
+        parallelogramma_group = VGroup(tri_orig, tri_copy)
+        
+        self.play(
+            parallelogramma_group.animate.shift(LEFT * 1.5),
+            linea_h.animate.shift(LEFT * 1.5),
+            label_h.animate.shift(LEFT * 1.5),
+            linea_b.animate.shift(LEFT * 1.5),
+            label_b.animate.shift(LEFT * 1.5),
+        )
+
+        # Testo Parallelogramma
+        txt_para = MathTex(r"A_{parallelogramma} = b \cdot h", color=COL_TRI, font_size=36)
+        txt_para.next_to(parallelogramma_group, DOWN, buff=0.8)
+        
+        self.play(Write(txt_para))
+        self.wait(1)
+
+        # --- 4. CONCLUSIONE (A = bh / 2) ---
+        txt_conclusione = Text("Il triangolo occupa metà\ndel parallelogramma.", font_size=28, color=TXT_COL, line_spacing=1.5)
+        txt_conclusione.to_edge(UP, buff=1.5).to_edge(RIGHT, buff=1.0)
+
+        formula_finale = MathTex(
+            r"A_{triangolo} = \frac{b \cdot h}{2}",
+            font_size=50, 
+            color=COL_ACCENT
+        )
+        box = SurroundingRectangle(formula_finale, color=COL_ACCENT, buff=0.3)
+        gruppo_finale = VGroup(formula_finale, box).next_to(txt_conclusione, DOWN, buff=1.0)
+
+        self.play(Write(txt_conclusione))
+        self.wait(1)
+        
+        # Enfatizziamo che il triangolo originale è metà
+        self.play(
+            tri_copy.animate.set_opacity(0.1),
+            tri_orig.animate.set_fill(opacity=0.8),
+            ReplacementTransform(txt_para, formula_finale),
+            Create(box)
+        )
+        
+        self.wait(3)
+        self.play(FadeOut(Group(parallelogramma_group, linea_h, label_h, linea_b, label_b, txt_conclusione, gruppo_finale, tri_copy)))
+
+
+    # ==========================================
+    # 5. AREA: CASI SPECIFICI
+    # ==========================================
+    def scena_5_area_casi(self):
+        COL_TESTO = WHITE
+        COL_FORME = "#00FFFF"
+        COL_ACCENTO = "#FF00FF"
+
+        titolo = Text("CASI SPECIFICI: AREA", font_size=40, color=COL_TESTO).to_corner(UL, buff=0.8)
+        self.play(FadeIn(titolo), run_time=1.0)
+
+        # Rettangolo
+        tri_rett = Polygon([0,0,0], [3.5,0,0], [0,2.2,0], color=COL_FORME, stroke_width=4)
+        lbl_c1 = MathTex("c_1", color=COL_TESTO).next_to(Line([0,0,0],[3.5,0,0]), DOWN)
+        lbl_c2 = MathTex("c_2", color=COL_TESTO).next_to(Line([0,0,0],[0,2.2,0]), LEFT)
+        angle = RightAngle(Line([0,0,0],[3.5,0,0]), Line([0,0,0],[0,2.2,0]), length=0.4, color=COL_ACCENTO)
+        
+        geom_rett = VGroup(tri_rett, lbl_c1, lbl_c2, angle).move_to(LEFT * 4.5 + UP * 1.0)
+        txt_rett = VGroup(
+            Text("Triangolo Rettangolo", font_size=32, color=COL_TESTO, weight=BOLD),
+            Text("I cateti fungono da base e altezza.", font_size=24, color=GREY_B),
+            MathTex(r"A = \frac{c_1 \cdot c_2}{2}", font_size=48, color=COL_ACCENTO)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.35).to_edge(RIGHT, buff=1.0).align_to(geom_rett, UP)
+
+        # Equilatero
+        l_eq = 3.2
+        h_eq = l_eq * np.sqrt(3) / 2
+        tri_eq = Polygon([-l_eq/2, 0, 0], [l_eq/2, 0, 0], [0, h_eq, 0], color=COL_FORME, stroke_width=4)
+        lbl_l = MathTex("l", color=COL_TESTO).next_to(tri_eq, DOWN)
+        geom_eq = VGroup(tri_eq, lbl_l).move_to(LEFT * 4.5 + DOWN * 2.2)
+        txt_eq = VGroup(
+            Text("Triangolo Equilatero", font_size=32, color=COL_TESTO, weight=BOLD),
+            Paragraph("Formula derivata dal", "Teorema di Pitagora.", font_size=24, color=GREY_B, line_spacing=1.3),
+            MathTex(r"A = l^2 \cdot \frac{\sqrt{3}}{4}", font_size=48, color=COL_ACCENTO)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.35).align_to(txt_rett, LEFT).align_to(geom_eq, UP)
+
+        self.play(FadeIn(geom_rett, shift=RIGHT), FadeIn(txt_rett, shift=LEFT), run_time=1.5)
+        self.play(Indicate(angle, color=WHITE), run_time=0.8)
+        self.play(FadeIn(geom_eq, shift=RIGHT), FadeIn(txt_eq, shift=LEFT), run_time=1.5)
+        self.wait(2.5)
+        self.play(FadeOut(titolo), FadeOut(geom_rett), FadeOut(txt_rett), FadeOut(geom_eq), FadeOut(txt_eq), run_time=1.0)
+
+    # ==========================================
+    # 6. FORMULA DI ERONE
+    # ==========================================
+    def scena_6_erone(self):
+        COL_TESTO, COL_ACCENT = "#E0F7FA", "#29B6F6"
+        COL_FORMULA, COL_LATI = "#4DD0E1", "#FFCC00"
+
+        titolo = Text("FORMULA DI ERONE", font_size=42, color=COL_ACCENT).to_edge(UP, buff=0.8)
+        desc = Tex(r"Utilizzata quando sono noti solo i tre lati ($a,b,c$),\\senza conoscere l'altezza.", color=COL_TESTO, font_size=28).next_to(titolo, DOWN)
+
+        A, B, C = [-2.5, -1.5, 0], [0.5, -1.5, 0], [-1.0, 1.0, 0]
+        tri = Polygon(A, B, C, color=COL_TESTO, stroke_width=4)
+        lbls = VGroup(
+            MathTex("a", color=COL_LATI).move_to([0.0, 0, 0]),
+            MathTex("b", color=COL_LATI).next_to(tri, DOWN, buff=0.2),
+            MathTex("c", color=COL_LATI).move_to([-2.0, 0, 0])
+        )
+        geom = VGroup(tri, lbls).to_edge(LEFT, buff=1.5).shift(DOWN*0.5)
+
+        # Formule
+        f1 = VGroup(
+            Text("Fase 1: Calcolo del Semiperimetro", font_size=24, color=GRAY_A),
+            MathTex("p", "=", "{a + b + c \\over 2}", color=COL_FORMULA, font_size=38)
+        ).arrange(DOWN, buff=0.2, aligned_edge=LEFT)
+        
+        radice = MathTex("A", "=", "\\sqrt{", "p", "(p-a)", "(p-b)", "(p-c)", "}", color=COL_ACCENT, font_size=44)
+        radice.set_color_by_tex("p", COL_FORMULA)
+        f2 = VGroup(
+            Text("Fase 2: Calcolo dell'Area", font_size=24, color=GRAY_A),
+            radice
+        ).arrange(DOWN, buff=0.2, aligned_edge=LEFT)
+
+        formule = VGroup(f1, f2).arrange(DOWN, buff=1.0, aligned_edge=LEFT).next_to(geom, RIGHT, buff=2.0).shift(UP*0.5)
+
+        self.play(Write(titolo), FadeIn(desc, shift=DOWN))
+        self.play(Create(tri), run_time=1.0)
+        self.play(Write(lbls))
+        
+        # Animazione formule
+        f1.shift(DOWN); f2.shift(DOWN)
+        self.play(FadeIn(f1), f1.animate.shift(UP), run_time=1.0)
+        self.wait(0.5)
+        self.play(FadeIn(f2[0]), f2[0].animate.shift(UP), run_time=0.8)
+        radice.shift(UP) # Fix pos
+        self.play(Write(radice), run_time=2.0)
+        self.wait(2.5)
+        self.play(FadeOut(titolo), FadeOut(desc), FadeOut(geom), FadeOut(formule))
+
+    # ==========================================
+    # 7. ESERCIZIO PRATICO
+    # ==========================================
+    def scena_7_esercizio_dati(self):
+        GLOW_CYAN = "#64FFDA"
+        WHITE = "#FFFFFF"
+
+        titolo = VGroup(
+            Text("ESERCIZIO PRATICO", color=GLOW_CYAN, font_size=48),
+            Text("Calcolare Perimetro e Area utilizzando i dati forniti.", font_size=24, color=WHITE)
+        ).arrange(DOWN, buff=0.3).to_edge(UP, buff=0.5)
+
+        dati = VGroup(
+            Text("Dati del Triangolo:", font_size=28, color=GLOW_CYAN),
+            Text("Lato a = 13 cm", font_size=24, color=WHITE),
+            Text("Lato b = 14 cm", font_size=24, color=WHITE),
+            Text("Lato c = 15 cm", font_size=24, color=WHITE)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.4).to_edge(LEFT, buff=2).shift(DOWN * 0.5)
+
+        scale = 0.25
+        tri = Polygon([0,0,0], [15*scale,0,0], [8.4*scale, 11.2*scale, 0], color=GLOW_CYAN, stroke_width=4).move_to(RIGHT*3 + DOWN*0.5)
+        
+        # Labels manuali per chiarezza
+        verts = tri.get_vertices()
+        lbls = VGroup(
+            Text("15 cm", font_size=20, color=WHITE).next_to(tri, DOWN),
+            Text("14 cm", font_size=20, color=WHITE).move_to((verts[0]+verts[2])/2).shift(LEFT*0.8 + UP*0.3),
+            Text("13 cm", font_size=20, color=WHITE).move_to((verts[1]+verts[2])/2).shift(RIGHT*0.8 + UP*0.3)
+        )
+
+        self.play(Write(titolo[0]), FadeIn(titolo[1], shift=UP), run_time=1.5)
+        self.play(FadeIn(dati, shift=RIGHT), Create(tri), Write(lbls), run_time=2.0)
+        self.wait(2.5)
+        self.play(FadeOut(titolo), FadeOut(dati), FadeOut(tri), FadeOut(lbls), run_time=1.5)
+
+    # ==========================================
+    # 8. CALCOLO E FINALE
+    # ==========================================
+    def scena_8_calcolo_finale(self):
+        # Parte 1: Calcoli
+        calc_grp = VGroup(
+            Tex(r"Calcolo del Perimetro: $P = 42cm$"),
+            Tex(r"Calcolo del Semiperimetro: $p = 21cm$")
+        ).arrange(DOWN, buff=0.5).move_to(ORIGIN)
+
+        self.play(Write(calc_grp[0])); self.play(Indicate(calc_grp[0], color=YELLOW))
+        self.play(Write(calc_grp[1])); self.play(Indicate(calc_grp[1], color=YELLOW))
+        self.wait(1.5)
+        self.play(FadeOut(calc_grp))
+
+        titolo = Tex(r"Calcolo dell'Area ($A$):").to_edge(UP)
+        p1 = MathTex(r"A = \sqrt{21 \cdot (21-13) \cdot (21-14) \cdot (21-15)}").scale(0.9).next_to(titolo, DOWN, buff=1)
+        p2 = MathTex(r"A = \sqrt{21 \cdot 8 \cdot 7 \cdot 6}").next_to(p1, DOWN, buff=0.5)
+        p3 = MathTex(r"A = \sqrt{7056}").next_to(p2, DOWN, buff=0.5)
+        
+        res = VGroup(Tex("RISULTATO FINALE: "), MathTex("A = 84cm^2").set_color(YELLOW)).arrange(RIGHT).move_to(DOWN * 2.5)
+
+        self.play(FadeIn(titolo))
+        self.play(Write(p1)); self.wait(1)
+        self.play(ReplacementTransform(p1.copy(), p2)); self.wait(0.5)
+        self.play(ReplacementTransform(p2.copy(), p3)); self.wait(0.5)
+        self.play(Write(res))
+        
+        box = SurroundingRectangle(res, color=YELLOW, buff=0.2)
+        self.play(Create(box), Flash(res, color=GOLD), Indicate(res[1], scale_factor=1.5, color=YELLOW))
+        self.wait(2)
+        
+        # Pulizia prima del gran finale
+        self.play(FadeOut(titolo), FadeOut(p1), FadeOut(p2), FadeOut(p3), FadeOut(res), FadeOut(box))
+
+        # Parte 2: Outro
+        grazie = Text("Grazie per l'attenzione", font_size=72, color=WHITE)
+        self.play(FadeIn(grazie)); self.wait(2); self.play(FadeOut(grazie))
+
+        # Triangolo Luminoso Finale
+        pA, pB, pC = UP*2.5, DOWN*1.5+LEFT*2.5, DOWN*1.5+RIGHT*2.5
+        tri_fin = VGroup(
+            Line(pA, pB, color=BLUE_A, stroke_width=4),
+            Line(pB, pC, color=BLUE_B, stroke_width=4),
+            Line(pC, pA, color=BLUE_C, stroke_width=4)
+        )
+        self.play(Create(tri_fin), run_time=2)
+        self.play(tri_fin.animate.set_color(WHITE).set_stroke(width=8), run_time=1)
+        self.play(Indicate(tri_fin, color=YELLOW, scale_factor=1.1))
+        self.wait(1)
+        self.play(FadeOut(tri_fin), run_time=1.5)
